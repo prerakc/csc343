@@ -14,11 +14,31 @@ CREATE TABLE q1(
 -- Do this for each of the views that define your intermediate steps.  
 -- (But give them better names!) The IF EXISTS avoids generating an error 
 -- the first time this file is imported.
-DROP VIEW IF EXISTS intermediate_step CASCADE;
+DROP VIEW IF EXISTS CustomerItemPurchases CASCADE;
+DROP VIEW IF EXISTS NonReviewedPurchases CASCADE;
 
 
 -- Define views for your intermediate steps here:
 
+CREATE VIEW CustomerItemPurchases AS
+SELECT DISTINCT Purchase.CID, firstName, lastName, email, LineItem.IID
+FROM Purchase, Customer, LineItem
+WHERE Purchase.CID = Customer.CID AND Purchase.PID = LineItem.PID;
+
+CREATE VIEW NonReviewedPurchases AS
+SELECT CID, firstName, lastName, email
+FROM CustomerItemPurchases
+WHERE IID NOT IN (
+    SELECT DISTINCT IID
+    FROM Review
+)
+GROUP BY CID, firstName, lastName, email
+HAVING count(distinct iid) >= 3;
+
 
 -- Your query that answers the question goes below the "insert into" line:
 insert into q1
+(
+    SELECT *
+    FROM NonReviewedPurchases
+);
