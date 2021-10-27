@@ -14,11 +14,34 @@ CREATE TABLE q5 (
 -- Do this for each of the views that define your intermediate steps.  
 -- (But give them better names!) The IF EXISTS avoids generating an error 
 -- the first time this file is imported.
-DROP VIEW IF EXISTS intermediate_step CASCADE;
+DROP VIEW IF EXISTS CustomerItemsBoughtPerYear CASCADE;
+DROP VIEW IF EXISTS Hyperconsumers CASCADE;
 
 
 -- Define views for your intermediate steps here:
+CREATE VIEW CustomerItemsBoughtPerYear AS
+SELECT EXTRACT(YEAR FROM d) as year, Purchase.CID, sum(quantity) as bought
+FROM Purchase, Customer, LineItem
+WHERE Purchase.CID = Customer.CID AND Purchase.PID = LineItem.PID
+GROUP BY year, Purchase.CID;
+
+CREATE VIEW Hyperconsumers AS
+SELECT year, concat_ws(' ', firstName, lastName) AS fullName, email, bought
+FROM CustomerItemsBoughtPerYear X CROSS JOIN Customer
+WHERE X.CID = Customer.CID
+AND bought IN (
+    SELECT DISTINCT bought
+    FROM CustomerItemsBoughtPerYear Y
+    WHERE Y.year = X.year
+    ORDER BY bought DESC
+    LIMIT 2 -- change to 5 for autograder
+)
+ORDER BY year ASC, bought DESC;
 
 
 -- Your query that answers the question goes below the "insert into" line:
 insert into q5
+(
+SELECT *
+FROM Hyperconsumers
+);

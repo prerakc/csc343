@@ -19,16 +19,16 @@ INSERT INTO Customer VALUES
 -- Purchase(PID, CID, d, cNumber, card)
 INSERT INTO Purchase VALUES
 (100, 1515, '2019-11-01', 12345, 'Amex'),
-(101, 1500, '2019-11-01', 64210, 'Visa'),
-(102, 1518, '2021-01-01', 99999, 'Mastercard'),
-(103, 1515, '2019-11-02', 12345, 'Amex');
+(101, 1500, '2020-11-01', 64210, 'Visa'),
+(102, 1518, '2020-01-01', 99999, 'Mastercard'),
+(103, 1515, '2020-11-02', 12345, 'Amex');
 
 -- LineItem(PID, IID, quantity)
 INSERT INTO LineItem VALUES
 (100, 4, 1),
 (100, 1, 2),
 (100, 5, 1),
-(101, 2, 4),
+(101, 2, 100),
 (102, 3, 10),
 (102, 1, 1),
 (102, 2, 1),

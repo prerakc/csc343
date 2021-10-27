@@ -55,6 +55,7 @@ CREATE VIEW ReviewedAll AS
 EXCEPT
 (SELECT DISTINCT cid, category from NotReviewed);
 
+
 -- Your query that answers the question goes below the "insert into" line:
 insert into q3
 (
