@@ -41,6 +41,7 @@ Select month, category, 0 as totalPrice from
 Create VIEW PurchaseDates AS
 select PID, IID, category, quantity, price*quantity as totalPrice, EXTRACT(MONTH FROM d) as month
 FROM Purchase NATURAL JOIN LineItem NATURAL JOIN Item
+WHERE EXTRACT(YEAR FROM d) = 2020
 Order BY month;
 
 ---- purchases ordered by categories for each month that exists:
