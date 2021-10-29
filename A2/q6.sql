@@ -79,7 +79,7 @@ select IID, year, avgUnitSales,
 From FixAvgSales
 order by IID, year ASC;
 
----- year over year sales
+---- year over year sales with percentages
 Create VIEW sales AS
 select IID, year, avgUnitSales, lastYearSales, prevYear,
 CASE 
