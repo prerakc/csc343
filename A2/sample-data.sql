@@ -4,10 +4,10 @@
 INSERT INTO Item VALUES 
 (1, 'Book', 'Cloud Atlas', 21.00),
 (2, 'Book', 'A Thousand Splendid Suns', 14.00),
-(3, 'Book', 'Homegoing', 22.00),
-(4, 'Book', 'Trickster', 18.00),
+(3, 'Book', 'Homegoing', 52.00),
+(4, 'Book', 'Trickster', 8.00),
 (5, 'Toy', 'Lego Hogwarts School of Witchcraft and Wizardry', 99.00),
-(6, 'Toy', 'AR-15', 999.99);
+(6, 'Toy', 'AR-15', 1000.00);
 
 -- Customer(CID, email, lastName, firstName, title)
 INSERT INTO Customer VALUES
@@ -25,7 +25,7 @@ INSERT INTO Purchase VALUES
 
 -- LineItem(PID, IID, quantity)
 INSERT INTO LineItem VALUES
-(100, 4, 1),
+(100, 4, 9),
 (100, 1, 2),
 (100, 5, 1),
 (101, 2, 100),
@@ -33,7 +33,7 @@ INSERT INTO LineItem VALUES
 (102, 1, 1),
 (102, 2, 1),
 (102, 4, 1),
-(103, 6, 1);
+(103, 6, 10);
 
 -- Review(CID, IID, rating, comment)
 INSERT INTO Review VALUES
