@@ -15,7 +15,7 @@ SET SEARCH_PATH TO Recommender;
 -- Your SQL code that performs the necessary updates goes here:
 UPDATE Item
 SET price = CASE
-        WHEN price BETWEEN 10 and 50 THEN 0.8 * price
+        WHEN price BETWEEN 10 AND 50 THEN 0.8 * price
         WHEN price > 50 AND price < 100 THEN 0.7 * price
         WHEN price >= 100 THEN 0.5 * price
         ELSE price
