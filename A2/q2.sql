@@ -52,8 +52,8 @@ FULL JOIN
     Where helpfulness = False
     GROUP BY reviewer, IID
 ) NotHelpfulReviews
-USING (reviewer, IID)
-WHERE reviewer NOT IN (SELECT CID FROM ZeroHelpfulness);
+USING (reviewer, IID);
+--WHERE reviewer NOT IN (SELECT CID FROM ZeroHelpfulness);
 
 CREATE VIEW HelpfulnessPercentage AS
 SELECT
