@@ -64,18 +64,15 @@ INSERT INTO Review VALUES
 (1515, 4, 5, 'Fantastic read!'),
 (1518, 4, 5, 'Ron said it was fantastic and he was right!!!'),
 (1515, 5, 1, 'I choked on a LEGO piece and nearly died.'),
-(1518, 1, 7, NULL),
 (1599, 4, 5, 'Ron didn''t lie!'),
 (1515, 6, 10, 'Fun for the whole family!'),
-(1515, 2, 2, 'Stars aren''t real..');
+(1515, 2, 2, NULL);
 
 -- Helpfulness(reviewer, IID, observer, helpfulness)
 INSERT INTO Helpfulness VALUES
-(1515, 4, 1599, False),
+(1599, 4, 1500, True),
 (1515, 4, 1518, True),
-(1515, 4, 1515, True),
-(1515, 4, 1500, True),
-(1518, 4, 1599, True),
+(1515, 5, 1500, True),
+(1515, 6, 1500, True),
 (1518, 4, 1515, True),
-(1518, 4, 1500, False);
-
+(1518, 4, 1500, True);
