@@ -29,7 +29,7 @@ UNION
 (
     SELECT CID, firstName, 0 AS helpfulness
     FROM Customer
-    WHERE CID NOT IN (SELECT DISTINCT observer FROM Helpfulness)
+    WHERE CID NOT IN (SELECT DISTINCT reviewer FROM Helpfulness)
 );
 
 CREATE VIEW ReviewMetrics AS
@@ -53,7 +53,6 @@ FULL JOIN
     GROUP BY reviewer, IID
 ) NotHelpfulReviews
 USING (reviewer, IID);
---WHERE reviewer NOT IN (SELECT CID FROM ZeroHelpfulness);
 
 CREATE VIEW HelpfulnessPercentage AS
 SELECT
