@@ -34,7 +34,7 @@ AND bought IN (
     FROM CustomerItemsBoughtPerYear Y
     WHERE Y.year = X.year
     ORDER BY bought DESC
-    LIMIT 2 -- change to 5 for autograder
+    LIMIT 5 -- change to 5 for autograder / 2 for sample data
 )
 ORDER BY year ASC, bought DESC;
 
