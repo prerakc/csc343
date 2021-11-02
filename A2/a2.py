@@ -11,6 +11,7 @@ expressly prohibited.
 """
 from typing import List, Optional
 import psycopg2 as pg
+import psycopg2.extras
 
 from ratings import RatingsTable
 
@@ -159,8 +160,65 @@ class Recommender:
         """
         try:
             # TODO: Complete this method.
+            cur = self.db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+            cur.execute("SET SEARCH_PATH TO Recommender;")
+            print(cur.statusmessage)
+            cur.execute("DROP VIEW IF EXISTS ItemQuantitiesBought;")
+            print(cur.statusmessage)
+            cur.execute("DELETE FROM PopularItems;")
+            print(cur.statusmessage)
+            cur.execute("DELETE FROM DefinitiveRatings;")
+            print(cur.statusmessage)
+            cur.execute(
+                """
+                CREATE VIEW ItemQuantitiesBought AS
+                SELECT Item.IID, Item.category, sum(quantity) as bought
+                FROM Item JOIN LineItem ON Item.IID = LineItem.IID
+                GROUP BY Item.IID;
+                """
+            )
+            print(cur.statusmessage)
+            cur.execute(
+                """
+                INSERT INTO PopularItems
+                (
+                    SELECT IID
+                    FROM ItemQuantitiesBought X
+                    WHERE IID IN (
+                        SELECT IID
+                        FROM ItemQuantitiesBought Y
+                        WHERE X.category = Y.category
+                        ORDER BY bought DESC
+                        LIMIT 2
+                    )
+                );
+                """
+            )
+            print(cur.statusmessage)
+            cur.execute(
+                """
+                INSERT INTO DefinitiveRatings
+                (
+                    SELECT CID, IID, rating
+                    FROM Review
+                    WHERE CID IN (SELECT * FROM Curator)
+                    AND IID IN (SELECT * FROM PopularItems)
+                );
+                """
+            )
+            print(cur.statusmessage)
+            cur.close()
+            self.db_conn.commit()
+            # for record in cur:
+            #     pid = record['pid']
+            #     cid = record['cid']
+            #     d = record['d']
+            #     cnumber = record['cnumber']
+            #     card = record['card']
+            #     print(f'{pid} | {cid} | {d} | {cnumber} | {card}')
             pass
-        except pg.Error:
+        except pg.Error as e:
+            print(e)
             return -1
 
 
@@ -211,8 +269,11 @@ def find_similar_curator(ratings: RatingsTable,
 def sample_testing_function() -> None:
     rec = Recommender()
     # TODO: Change this to connect to your own database:
-    rec.connect_db("csc343h-dianeh", "dianeh", "")
+    rec.connect_db("csc343h-chaud496", "chaud496", "")
     # TODO: Test one or more methods here.
+    print(rec.repopulate())
+    rec.disconnect_db()
+
 
 
 if __name__ == '__main__':

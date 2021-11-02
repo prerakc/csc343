@@ -7,7 +7,10 @@ INSERT INTO Item VALUES
 (3, 'Book', 'Homegoing', 52.00),
 (4, 'Book', 'Trickster', 8.00),
 (5, 'Toy', 'Lego Hogwarts School of Witchcraft and Wizardry', 99.00),
-(6, 'Toy', 'AR-15', 1000.00);
+(6, 'Toy', 'AR-15', 1000.00),
+(7, 'Book', 'The Beast in the Veil', 1.00),
+(8, 'Book', 'Prince of Glass', 2.00),
+(9, 'Book', 'The Gold Painting', 3.00);
 
 -- Customer(CID, email, lastName, firstName, title)
 INSERT INTO Customer VALUES
@@ -41,7 +44,7 @@ INSERT INTO LineItem VALUES
 (102, 3, 10),
 (102, 1, 1),
 (102, 2, 1),
-(102, 4, 1),
+(102, 4, 2),
 (103, 6, 10),
 (104, 6, 1),
 (105, 6, 1),
@@ -51,7 +54,10 @@ INSERT INTO LineItem VALUES
 (109, 6, 1),
 (110, 6, 1),
 (111, 6, 1),
-(112, 6, 1);
+(112, 6, 1),
+(100, 7, 1),
+(100, 8, 1),
+(100, 9, 1);
 
 -- Review(CID, IID, rating, comment)
 INSERT INTO Review VALUES
@@ -60,7 +66,8 @@ INSERT INTO Review VALUES
 (1515, 5, 1, 'I choked on a LEGO piece and nearly died.'),
 (1518, 1, 7, NULL),
 (1599, 4, 5, 'Ron didn''t lie!'),
-(1515, 6, 10, 'Fun for the whole family!');
+(1515, 6, 10, 'Fun for the whole family!'),
+(1515, 2, 2, 'Stars aren''t real..');
 
 -- Helpfulness(reviewer, IID, observer, helpfulness)
 INSERT INTO Helpfulness VALUES
