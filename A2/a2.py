@@ -98,7 +98,6 @@ class Recommender:
             # TODO: Complete this method.
             if (k <= 0):
                 return None
-            print(self.repopulate())
             cur = self.db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             cur.execute("SET SEARCH_PATH TO Recommender;")
             print(cur.statusmessage)
@@ -311,7 +310,7 @@ def sample_testing_function() -> None:
     # TODO: Change this to connect to your own database:
     rec.connect_db("csc343h-chaud496", "chaud496", "")
     # TODO: Test one or more methods here.
-    #print(rec.repopulate())
+    print(rec.repopulate())
     print(rec.recommend_generic(2))
     rec.disconnect_db()
 
