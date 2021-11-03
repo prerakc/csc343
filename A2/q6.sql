@@ -3,14 +3,6 @@
 -- You must not change the next 2 lines or the table definition.
 SET SEARCH_PATH TO Recommender;
 DROP TABLE IF EXISTS q6 CASCADE;
-DROP TABLE IF EXISTS months CASCADE;
-
-CREATE TABLE months (
-    month INTEGER
-);
-
-INSERT INTO months VALUES 
-(1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12);
 
 CREATE TABLE q6 (
     IID INT NOT NULL,
@@ -24,80 +16,79 @@ CREATE TABLE q6 (
 -- Do this for each of the views that define your intermediate steps.  
 -- (But give them better names!) The IF EXISTS avoids generating an error 
 -- the first time this file is imported.
-DROP VIEW IF EXISTS itemMonthPlaceholder CASCADE;
-DROP VIEW IF EXISTS purchaseTotal CASCADE;
-DROP VIEW IF EXISTS unitSales CASCADE;
-DROP VIEW IF EXISTS avgSales CASCADE;
-DROP VIEW IF EXISTS FixAvgSales CASCADE;
-DROP VIEW IF EXISTS yoySales CASCADE;
-DROP VIEW IF EXISTS sales CASCADE;
+DROP VIEW IF EXISTS Months CASCADE;
+DROP VIEW IF EXISTS earliestYear CASCADE;
+DROP VIEW IF EXISTS latestYear CASCADE;
+DROP VIEW IF EXISTS YearRange CASCADE;
+DROP VIEW IF EXISTS YearMonthItemCombos CASCADE;
+DROP VIEW IF EXISTS TotalUnitSalesOverZero CASCADE;
+DROP VIEW IF EXISTS TotalUnitSales CASCADE;
+
 
 -- Define views for your intermediate steps here:
+CREATE VIEW Months AS
+SELECT generate_series(1,12) AS month;
 
----- list of items, months and sales with placeholders
-Create VIEW itemMonthPlaceholder AS
-select IID, month, EXTRACT(YEAR FROM d) as year, 0 as sales
- from Purchase cross join (Select * from months cross join (select IID from Item) as items)
-  as itemM
-order by month, year;
+CREATE VIEW earliestYear AS
+SELECT EXTRACT(YEAR FROM d) as ey
+FROM Purchase
+ORDER BY EXTRACT(YEAR FROM d) ASC
+LIMIT 1;
 
----- purchases for each month that exists:
-Create VIEW purchaseTotal AS
-select IID, EXTRACT(MONTH FROM d) as month, EXTRACT(YEAR FROM d) as year, sum(quantity) as sales
-FROM Purchase NATURAL JOIN LineItem NATURAL JOIN Item
-group by IID, month, year
-Order BY month;
+CREATE VIEW latestYear AS
+SELECT EXTRACT(YEAR FROM d) as ly
+FROM Purchase
+ORDER BY EXTRACT(YEAR FROM d) DESC
+LIMIT 1;
 
----- list of items, months and sales
-Create VIEW unitSales AS
-(select * from itemMonthPlaceholder 
-where not exists (select IID, MONTH, YEAR from purchaseTotal
-    where itemMonthPlaceholder.IID = purchaseTotal.IID and
-    itemMonthPlaceholder.month = purchaseTotal.month and
-    itemMonthPlaceholder.year = purchaseTotal.year)  UNION select * from purchaseTotal)
-order by month;
+CREATE VIEW YearRange AS
+SELECT generate_series(
+    CAST(ey AS INTEGER),
+    CAST(ly AS INTEGER)
+) AS year
+FROM earliestYear, latestYear;
 
----- list of items, avg sale by year
-Create VIEW avgSales AS
-select IID, year, sum(sales)/12 as avgUnitSales from unitSales
-group by IID, year
-order by IID, year ASC;
+CREATE VIEW YearMonthItemCombos AS
+SELECT *
+FROM (SELECT * FROM YearRange, Months) YearMonths, (SELECT IID FROM Item) Items;
 
----- list of items, avg sale by year with placeholder year
-Create VIEW FixAvgSales AS
-select * from avgSales 
-UNION 
-select DISTINCT IID, (min(year)-1) as year, 0 as avgUnitSales from avgSales
-group by IID;
+CREATE VIEW TotalUnitSalesOverZero AS
+SELECT
+    CAST(EXTRACT(YEAR FROM d) AS INTEGER) AS year,
+    CAST(EXTRACT(MONTH FROM d) AS INTEGER) AS month,
+    Item.IID,
+    sum(quantity) as sales
+FROM
+    Purchase
+    JOIN LineItem ON Purchase.PID = LineItem.PID
+    JOIN Item ON LineItem.IID = Item.IID
+GROUP BY EXTRACT(YEAR FROM d), EXTRACT(MONTH FROM d), Item.IID;
 
+CREATE VIEW TotalUnitSales AS
+SELECT year, month, IID, COALESCE(sales, 0) as sales
+FROM TotalUnitSalesOverZero RIGHT JOIN YearMonthItemCombos USING (year, month, IID);
 
----- year over year sales
-Create VIEW yoySales AS
-select IID, year, avgUnitSales,
- LAG(avgUnitSales) OVER (ORDER BY IID, year ASC) As lastYearSales, 
- LAG(year) OVER (ORDER BY IID, year ASC) As prevYear
-From FixAvgSales
-order by IID, year ASC;
+CREATE VIEW AverageMonthlyUnitSales AS
+SELECT year, IID, avg(sales) as average
+FROM TotalUnitSales
+GROUP BY (year, IID);
 
----- year over year sales with percentages
-Create VIEW sales AS
-select IID, year, avgUnitSales, lastYearSales, prevYear,
-CASE 
-    WHEN (lastYearSales = 0 and avgUnitSales > 0) THEN 'Infinity'
-    WHEN (lastYearSales > 0 and avgUnitSales = 0) THEN -100
-    WHEN (lastYearSales = 0 and avgUnitSales = 0) THEN 0
-    WHEN ((avgUnitSales-lastYearSales)/NULLIF(avgUnitSales,0))*100 < -100 THEN -100
-    WHEN ((avgUnitSales-lastYearSales)/NULLIF(avgUnitSales,0))*100 > 100 THEN 100
-    ELSE ((avgUnitSales-lastYearSales)/NULLIF(avgUnitSales,0))*100 
-END AS percent
-from yoySales
-WHERE year != (select min(year) from yoySales);
 
 -- Your query that answers the question goes below the "insert into" line:
-insert into q6(
-    select IID, prevYear as Year1, 
-        lastYearSales as Year1Average, year as Year2, 
-        avgUnitSales as Year2Average, percent as YearOverYearChange 
-    from sales
-    where prevYear != (select min(year) from yoySales)
-)
+insert into q6
+(
+    SELECT
+        X.IID,
+        X.year AS firstYear,
+        X.average AS firstNameAverage,
+        Y.year AS secondYear,
+        Y.average AS secondYearAverage,
+        CASE
+            WHEN X.average = 0.0 AND Y.average != 0.0 THEN FLOAT 'Infinity'
+            WHEN X.average != 0.0 AND Y.average = 0.0 THEN FLOAT '-100'
+            WHEN X.average = 0.0 AND Y.average = 0.0 THEN FLOAT '0'
+            ELSE (100*(Y.average - X.average)/X.average)::FLOAT
+        END AS change
+    FROM AverageMonthlyUnitSales X, AverageMonthlyUnitSales Y
+    WHERE Y.year - X.year = 1 AND X.IID = Y.IID
+);
