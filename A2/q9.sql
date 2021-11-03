@@ -7,20 +7,39 @@ SET SEARCH_PATH TO Recommender;
 -- Do this for each of the views that define your intermediate steps.  
 -- (But give them better names!) The IF EXISTS avoids generating an error 
 -- the first time this file is imported.
-DROP VIEW IF EXISTS allOrders CASCADE;
+DROP VIEW IF EXISTS Last24HoursPurchases CASCADE;
+DROP VIEW IF EXISTS EarliestPurchases CASCADE;
+
 
 -- Define views for your intermediate steps here:
+CREATE VIEW Last24HoursPurchases AS
+SELECT *
+FROM Purchase
+WHERE d >= TIMESTAMP 'yesterday' AND d < TIMESTAMP 'today';
 
----- earliest orders from yesterday from each user
-CREATE VIEW allOrders as 
-select pid, m.cid, d from (select cid, min(d) as mn from Purchase
-where d > TIMESTAMP 'yesterday'
-group by cid) t join Purchase m ON m.cid = t.cid and t.mn=m.d;
+CREATE VIEW EarliestPurchases AS
+SELECT *
+FROM Last24HoursPurchases X
+WHERE d <= ALL (
+    SELECT d
+    FROM Last24HoursPurchases Y
+    WHERE X.CID = Y.CID
+);
+
 
 -- Your SQL code that performs the necessary insertions goes here:
+INSERT INTO Item
+(
+    SELECT
+        max(IID) + 1 AS IID,
+        'Housewares' AS category,
+        'Company logo mug' AS description,
+        0.00 AS price
+    FROM Item
+);
 
-INSERT INTO Item VALUES 
-((select MAX(iid) from Item)+1, 'Housewares', 'Company logo mug', 0.00);
-
-INSERT INTO LineItem VALUES
-((select pid from allOrders), (select max(iid) from Item), 1);
+INSERT INTO LineItem
+(
+    SELECT PID, IID, 1 AS quantity
+    FROM EarliestPurchases, (SELECT max(IID) AS IID FROM Item) ItemIID
+);

@@ -15,6 +15,7 @@ import psycopg2.extras
 
 from ratings import RatingsTable
 
+from time import sleep
 
 class Recommender:
     """A simple recommender that can work with data conforming to the schema in
@@ -94,10 +95,89 @@ class Recommender:
           (Do not call repopulate in this method.)
         - k > 0
         """
+        accum = []
         try:
             # TODO: Complete this method.
+            if (k <= 0):
+                return None
+
+            cur = self.db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+            #cur.execute("SET SEARCH_PATH TO Recommender;")
+            #accum.append(cur.statusmessage)
+            #sleep(5)
+            #cur.execute("SHOW SEARCH_PATH;")
+            #print(cur.statusmessage)
+            #accum.append(cur.fetchall())
+            #cur.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'recommender';")
+            #accum.append(cur.statusmessage)
+            #accum.append(cur.fetchall())
+            #cur.execute("SELECT * FROM Curator;")
+            #accum.append(cur.statusmessage)
+            #accum.append(cur.fetchall())
+            #cur.execute("SELECT * FROM PopularItems;")
+            #accum.append(cur.statusmessage)
+            #accum.append(cur.fetchall())
+            #cur.execute("SELECT * FROM DefinitiveRatings;")
+            #accum.append(cur.statusmessage)
+            #accum.append(cur.fetchall())
+            #cur.execute("DROP VIEW IF EXISTS AverageRatings;")
+            #print(cur.statusmessage)
+            #accum.append(cur.statusmessage)
+            cur.execute(
+                """
+                CREATE VIEW AverageRatings AS
+                SELECT IID, avg(rating) as average
+                FROM Review
+                GROUP BY IID;
+                """
+            )
+            #print(cur.statusmessage)
+            #accum.append(cur.statusmessage)
+            #cur.execute("SELECT * FROM AverageRatings;")
+            #accum.append(cur.statusmessage)
+            #accum.append(cur.fetchall())
+            # cur.execute(
+            #     """
+            #     SELECT IID
+            #     FROM AverageRatings
+            #     WHERE average IN (
+            #         SELECT DISTINCT average
+            #         FROM AverageRatings
+            #         ORDER BY average DESC
+            #         LIMIT %s
+            #     )
+            #     ORDER BY IID ASC
+            #     LIMIT %s;
+            #     """,
+            #     (k,k)
+            # )
+            #print(cur.statusmessage)
+            #accum.append(cur.statusmessage)
+            #accum.append(cur.fetchall())
+            cur.execute(
+                """
+                SELECT IID
+                FROM AverageRatings
+                WHERE average IN (
+                    SELECT DISTINCT average
+                    FROM AverageRatings
+                    ORDER BY average DESC
+                    LIMIT %s
+                )
+                ORDER BY IID ASC
+                LIMIT %s;
+                """,
+                (k,k)
+            )
+            for record in cur:
+                #print(record, type(record), record['iid'], type(record['iid']))
+                accum.append(record['iid'])
+            cur.close()
+            self.db_conn.commit()
+            return accum
             pass
         except pg.Error:
+            #print(accum)
             return None
 
     def recommend(self, cust: int, k: int) -> Optional[List[int]]:
@@ -161,14 +241,14 @@ class Recommender:
         try:
             # TODO: Complete this method.
             cur = self.db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-            cur.execute("SET SEARCH_PATH TO Recommender;")
-            print(cur.statusmessage)
+            #cur.execute("SET SEARCH_PATH TO Recommender;")
+            #print(cur.statusmessage)
             cur.execute("DROP VIEW IF EXISTS ItemQuantitiesBought;")
-            print(cur.statusmessage)
+            #print(cur.statusmessage)
             cur.execute("DELETE FROM PopularItems;")
-            print(cur.statusmessage)
+            #print(cur.statusmessage)
             cur.execute("DELETE FROM DefinitiveRatings;")
-            print(cur.statusmessage)
+            #print(cur.statusmessage)
             cur.execute(
                 """
                 CREATE VIEW ItemQuantitiesBought AS
@@ -177,7 +257,7 @@ class Recommender:
                 GROUP BY Item.IID;
                 """
             )
-            print(cur.statusmessage)
+            #print(cur.statusmessage)
             cur.execute(
                 """
                 INSERT INTO PopularItems
@@ -194,7 +274,7 @@ class Recommender:
                 );
                 """
             )
-            print(cur.statusmessage)
+            #print(cur.statusmessage)
             cur.execute(
                 """
                 INSERT INTO DefinitiveRatings
@@ -206,7 +286,7 @@ class Recommender:
                 );
                 """
             )
-            print(cur.statusmessage)
+            #print(cur.statusmessage)
             cur.close()
             self.db_conn.commit()
             # for record in cur:
@@ -216,6 +296,7 @@ class Recommender:
             #     cnumber = record['cnumber']
             #     card = record['card']
             #     print(f'{pid} | {cid} | {d} | {cnumber} | {card}')
+            return 0
             pass
         except pg.Error as e:
             print(e)
@@ -274,6 +355,7 @@ def sample_testing_function() -> None:
         rec.connect_db("csc343h-chaud496", "chaud496", "")
         # TODO: Test one or more methods here.
         print(rec.repopulate())
+        print(rec.recommend_generic(2))
         rec.disconnect_db()
     else: 
         # TODO: Change this to connect to your own database:
