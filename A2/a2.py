@@ -15,6 +15,7 @@ import psycopg2.extras
 
 from ratings import RatingsTable
 
+from time import sleep
 
 class Recommender:
     """A simple recommender that can work with data conforming to the schema in
@@ -94,14 +95,19 @@ class Recommender:
           (Do not call repopulate in this method.)
         - k > 0
         """
+        accum = []
         try:
             # TODO: Complete this method.
             if (k <= 0):
                 return None
-            accum = []
+
             cur = self.db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             #cur.execute("SET SEARCH_PATH TO Recommender;")
+            #accum.append(cur.statusmessage)
+            #sleep(5)
+            cur.execute("SHOW SEARCH_PATH;")
             #print(cur.statusmessage)
+            accum.append(cur.fetchall())
             cur.execute("DROP VIEW IF EXISTS AverageRatings;")
             #print(cur.statusmessage)
             accum.append(cur.statusmessage)
@@ -115,6 +121,9 @@ class Recommender:
             )
             #print(cur.statusmessage)
             accum.append(cur.statusmessage)
+            cur.execute("SELECT * FROM AverageRatings;")
+            accum.append(cur.statusmessage)
+            accum.append(cur.fetchall())
             cur.execute(
                 """
                 SELECT IID
@@ -132,7 +141,22 @@ class Recommender:
             )
             #print(cur.statusmessage)
             accum.append(cur.statusmessage)
-           
+            accum.append(cur.fetchall())
+            cur.execute(
+                """
+                SELECT IID
+                FROM AverageRatings
+                WHERE average IN (
+                    SELECT DISTINCT average
+                    FROM AverageRatings
+                    ORDER BY average DESC
+                    LIMIT %s
+                )
+                ORDER BY IID ASC
+                LIMIT %s;
+                """,
+                (k,k)
+            )
             for record in cur:
                 #print(record, type(record), record['iid'], type(record['iid']))
                 accum.append(record['iid'])
@@ -141,6 +165,7 @@ class Recommender:
             return accum
             pass
         except pg.Error:
+            print(accum)
             return None
 
     def recommend(self, cust: int, k: int) -> Optional[list[int]]:
