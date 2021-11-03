@@ -96,6 +96,45 @@ class Recommender:
         """
         try:
             # TODO: Complete this method.
+            if (k <= 0):
+                return None
+            cur = self.db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+            cur.execute("SET SEARCH_PATH TO Recommender;")
+            print(cur.statusmessage)
+            cur.execute("DROP VIEW IF EXISTS AverageRatings;")
+            print(cur.statusmessage)
+            cur.execute(
+                """
+                CREATE VIEW AverageRatings AS
+                SELECT IID, avg(rating) as average
+                FROM DefinitiveRatings
+                GROUP BY IID;
+                """
+            )
+            print(cur.statusmessage)
+            cur.execute(
+                """
+                SELECT IID
+                FROM AverageRatings
+                WHERE average IN (
+                    SELECT DISTINCT average
+                    FROM AverageRatings
+                    ORDER BY average DESC
+                    LIMIT %s
+                )
+                ORDER BY IID ASC
+                LIMIT %s;
+                """,
+                (k,k)
+            )
+            print(cur.statusmessage)
+            accum = []
+            for record in cur:
+                print(record, type(record), record['iid'], type(record['iid']))
+                accum.append(record['iid'])
+            cur.close()
+            self.db_conn.commit()
+            return accum
             pass
         except pg.Error:
             return None
@@ -272,6 +311,7 @@ def sample_testing_function() -> None:
     rec.connect_db("csc343h-chaud496", "chaud496", "")
     # TODO: Test one or more methods here.
     print(rec.repopulate())
+    print(rec.recommend_generic(2))
     rec.disconnect_db()
 
 
