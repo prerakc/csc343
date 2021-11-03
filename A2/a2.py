@@ -105,55 +105,55 @@ class Recommender:
             #cur.execute("SET SEARCH_PATH TO Recommender;")
             #accum.append(cur.statusmessage)
             #sleep(5)
-            cur.execute("SHOW SEARCH_PATH;")
+            #cur.execute("SHOW SEARCH_PATH;")
             #print(cur.statusmessage)
-            accum.append(cur.fetchall())
-            cur.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'recommender';")
-            accum.append(cur.statusmessage)
-            accum.append(cur.fetchall())
-            cur.execute("SELECT * FROM Curator;")
-            accum.append(cur.statusmessage)
-            accum.append(cur.fetchall())
-            cur.execute("SELECT * FROM PopularItems;")
-            accum.append(cur.statusmessage)
-            accum.append(cur.fetchall())
-            cur.execute("SELECT * FROM DefinitiveRatings;")
-            accum.append(cur.statusmessage)
-            accum.append(cur.fetchall())
-            cur.execute("DROP VIEW IF EXISTS AverageRatings;")
+            #accum.append(cur.fetchall())
+            #cur.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'recommender';")
+            #accum.append(cur.statusmessage)
+            #accum.append(cur.fetchall())
+            #cur.execute("SELECT * FROM Curator;")
+            #accum.append(cur.statusmessage)
+            #accum.append(cur.fetchall())
+            #cur.execute("SELECT * FROM PopularItems;")
+            #accum.append(cur.statusmessage)
+            #accum.append(cur.fetchall())
+            #cur.execute("SELECT * FROM DefinitiveRatings;")
+            #accum.append(cur.statusmessage)
+            #accum.append(cur.fetchall())
+            #cur.execute("DROP VIEW IF EXISTS AverageRatings;")
             #print(cur.statusmessage)
-            accum.append(cur.statusmessage)
+            #accum.append(cur.statusmessage)
             cur.execute(
                 """
                 CREATE VIEW AverageRatings AS
                 SELECT IID, avg(rating) as average
-                FROM DefinitiveRatings
+                FROM Review
                 GROUP BY IID;
                 """
             )
             #print(cur.statusmessage)
-            accum.append(cur.statusmessage)
-            cur.execute("SELECT * FROM AverageRatings;")
-            accum.append(cur.statusmessage)
-            accum.append(cur.fetchall())
-            cur.execute(
-                """
-                SELECT IID
-                FROM AverageRatings
-                WHERE average IN (
-                    SELECT DISTINCT average
-                    FROM AverageRatings
-                    ORDER BY average DESC
-                    LIMIT %s
-                )
-                ORDER BY IID ASC
-                LIMIT %s;
-                """,
-                (k,k)
-            )
+            #accum.append(cur.statusmessage)
+            #cur.execute("SELECT * FROM AverageRatings;")
+            #accum.append(cur.statusmessage)
+            #accum.append(cur.fetchall())
+            # cur.execute(
+            #     """
+            #     SELECT IID
+            #     FROM AverageRatings
+            #     WHERE average IN (
+            #         SELECT DISTINCT average
+            #         FROM AverageRatings
+            #         ORDER BY average DESC
+            #         LIMIT %s
+            #     )
+            #     ORDER BY IID ASC
+            #     LIMIT %s;
+            #     """,
+            #     (k,k)
+            # )
             #print(cur.statusmessage)
-            accum.append(cur.statusmessage)
-            accum.append(cur.fetchall())
+            #accum.append(cur.statusmessage)
+            #accum.append(cur.fetchall())
             cur.execute(
                 """
                 SELECT IID
@@ -177,7 +177,7 @@ class Recommender:
             return accum
             pass
         except pg.Error:
-            print(accum)
+            #print(accum)
             return None
 
     def recommend(self, cust: int, k: int) -> Optional[list[int]]:
