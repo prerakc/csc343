@@ -98,11 +98,13 @@ class Recommender:
             # TODO: Complete this method.
             if (k <= 0):
                 return None
+            accum = []
             cur = self.db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             #cur.execute("SET SEARCH_PATH TO Recommender;")
             #print(cur.statusmessage)
             cur.execute("DROP VIEW IF EXISTS AverageRatings;")
             #print(cur.statusmessage)
+            accum.append(cur.statusmessage)
             cur.execute(
                 """
                 CREATE VIEW AverageRatings AS
@@ -112,6 +114,7 @@ class Recommender:
                 """
             )
             #print(cur.statusmessage)
+            accum.append(cur.statusmessage)
             cur.execute(
                 """
                 SELECT IID
@@ -128,7 +131,8 @@ class Recommender:
                 (k,k)
             )
             #print(cur.statusmessage)
-            accum = []
+            accum.append(cur.statusmessage)
+           
             for record in cur:
                 #print(record, type(record), record['iid'], type(record['iid']))
                 accum.append(record['iid'])
