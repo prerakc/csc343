@@ -100,7 +100,7 @@ class Recommender:
         except pg.Error:
             return None
 
-    def recommend(self, cust: int, k: int) -> Optional[list[int]]:
+    def recommend(self, cust: int, k: int) -> Optional[List[int]]:
         """Return the item IDs of items that are recommended for the customer
         with customer ID cust.
 
@@ -267,12 +267,21 @@ def find_similar_curator(ratings: RatingsTable,
 
 
 def sample_testing_function() -> None:
+    x= input("Type 0 for Prerak and anything else for Jaak:")
     rec = Recommender()
-    # TODO: Change this to connect to your own database:
-    rec.connect_db("csc343h-chaud496", "chaud496", "")
-    # TODO: Test one or more methods here.
-    print(rec.repopulate())
-    rec.disconnect_db()
+    if x == 0:
+        # TODO: Change this to connect to your own database:
+        rec.connect_db("csc343h-chaud496", "chaud496", "")
+        # TODO: Test one or more methods here.
+        print(rec.repopulate())
+        rec.disconnect_db()
+    else: 
+        # TODO: Change this to connect to your own database:
+        print(rec.connect_db("csc343h-subeeth1", "subeeth1", ""))
+        # TODO: Test one or more methods here.
+        print(rec.repopulate())
+        rec.disconnect_db()
+    
 
 
 
