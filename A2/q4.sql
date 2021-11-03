@@ -3,14 +3,6 @@
 -- You must not change the next 2 lines or the table definition.
 SET SEARCH_PATH TO Recommender;
 DROP TABLE IF EXISTS q4 CASCADE;
-DROP TABLE IF EXISTS months CASCADE;
-
-CREATE TABLE months (
-    month INTEGER
-);
-
-INSERT INTO months VALUES 
-(1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12);
 
 CREATE TABLE q4 (
     month TEXT NOT NULL,
@@ -23,76 +15,68 @@ CREATE TABLE q4 (
 -- Do this for each of the views that define your intermediate steps.  
 -- (But give them better names!) The IF EXISTS avoids generating an error 
 -- the first time this file is imported.
-DROP VIEW IF EXISTS PurchaseDates CASCADE;
-DROP VIEW IF EXISTS PurchaseExistCat CASCADE;
-DROP VIEW IF EXISTS placeholder CASCADE;
-DROP VIEW IF EXISTS PurchaseCat CASCADE;
-DROP VIEW IF EXISTS highest CASCADE;
-DROP VIEW IF EXISTS highestCat CASCADE;
-DROP VIEW IF EXISTS lowest CASCADE;
-DROP VIEW IF EXISTS lowestCat CASCADE;
+DROP VIEW IF EXISTS LineItemSales CASCADE;
+DROP VIEW IF EXISTS MonthlyCategorySalesOverZero CASCADE;
+DROP VIEW IF EXISTS Months CASCADE;
+DROP VIEW IF EXISTS Categories CASCADE;
+DROP VIEW IF EXISTS MonthsCategoriesCP CASCADE;
+DROP VIEW IF EXISTS MonthlyCategorySales CASCADE;
+DROP VIEW IF EXISTS HighestMonthlyCategories CASCADE;
+DROP VIEW IF EXISTS LowestMonthlyCategories CASCADE;
 
----- create month category placeholder
-Create VIEW placeholder AS
-Select month, category, 0 as totalPrice from
-((select DISTINCT category from Item) as item cross join (select month from months) as month) as monthCat;  
 
----- purchases for each month that exists:
-Create VIEW PurchaseDates AS
-select PID, IID, category, quantity, price*quantity as totalPrice, EXTRACT(MONTH FROM d) as month
-FROM Purchase NATURAL JOIN LineItem NATURAL JOIN Item
-WHERE EXTRACT(YEAR FROM d) = 2020
-Order BY month;
+-- Define views for your intermediate steps here:
+CREATE VIEW LineItemSales AS
+SELECT d, Item.IID, category, price, quantity, price * quantity as sale
+FROM
+    Purchase
+    JOIN LineItem ON Purchase.PID = LineItem.PID
+    JOIN Item ON LineItem.IID = Item.IID
+WHERE EXTRACT(YEAR FROM d) = '2020';
 
----- purchases ordered by categories for each month that exists:
-Create VIEW PurchaseExistCat AS
-select month, category, sum(totalPrice) as totalPrice
-from PurchaseDates
-GROUP BY category, month
-order by month;
+CREATE VIEW MonthlyCategorySalesOverZero AS
+SELECT to_char(d, 'MM') AS month, category, sum(sale) as sales
+FROM LineItemSales
+GROUP BY month, category
+ORDER BY month ASC, sales DESC;
 
----- purchases ordered by categories for each month that exists:
-Create VIEW PurchaseCat AS
-(select * from placeholder 
-where not exists (select month from PurchaseExistCat 
-    where placeholder.month = PurchaseExistCat.month
-    and placeholder.category = PurchaseExistCat.category) 
-UNION select * from PurchaseExistCat)
-order by month;
+CREATE VIEW Months AS
+SELECT to_char(DATE '2014-01-01' + (interval '1 month' * generate_series(0,11)), 'MM') AS month;
 
----- highest for each month
-Create VIEW highest AS
-select month, max(totalPrice) as highestSalesValue from PurchaseCat
-GROUP by month;
+CREATE VIEW Categories AS
+SELECT DISTINCT category
+FROM Item;
 
----- highest cat for each month
-Create VIEW highestCat AS
-select month as highMonth, category as highestCategory, totalPrice as highestSalesValue from PurchaseCat 
-where exists (select month, highestSalesValue
-    from highest 
-    where PurchaseCat.month = highest.month and PurchaseCat.totalPrice = highest.highestSalesValue)
-Order by month;
+CREATE VIEW MonthsCategoriesCP AS
+SELECT *
+FROM Months CROSS JOIN Categories;
 
----- lowest for each month
-Create VIEW lowest AS
-select month, min(totalPrice) as lowestSalesValue from PurchaseCat
-GROUP by month;
+CREATE VIEW MonthlyCategorySales AS
+SELECT month, category, COALESCE(sales, 0) as sales
+FROM MonthlyCategorySalesOverZero RIGHT JOIN MonthsCategoriesCP USING (month, category);
 
----- lowest cat for each month
-Create VIEW lowestCat AS
-select month, category as lowestCategory, totalPrice as lowestSalesValue from PurchaseCat 
-where exists (select month, lowestSalesValue
-    from lowest 
-    where PurchaseCat.month = lowest.month and PurchaseCat.totalPrice = lowest.lowestSalesValue)
-Order by month;
+CREATE VIEW HighestMonthlyCategories AS
+SELECT month, category as highestCategory, sales as highestSalesValue
+FROM MonthlyCategorySales X 
+WHERE sales >= ALL (
+    SELECT sales
+    FROM MonthlyCategorySales Y
+    WHERE X.month = Y.month
+);
 
----- lowest cat and highest cat for each month
-Create VIEW LowHighCat AS
-Select month, highestCategory, highestSalesValue, lowestCategory, lowestSalesValue
-from highestCat cross join lowestCat 
-where highestCat.highmonth = lowestCat.month;
+CREATE VIEW LowestMonthlyCategories AS
+SELECT month, category as lowestCategory, sales as lowestSalesValue
+FROM MonthlyCategorySales X 
+WHERE sales <= ALL (
+    SELECT sales
+    FROM MonthlyCategorySales Y
+    WHERE X.month = Y.month
+);
+
 
 -- Your query that answers the question goes below the "insert into" line:
-insert into q4(
-    select * from LowHighCat
-)
+insert into q4
+(
+    SELECT *
+    FROM HighestMonthlyCategories JOIN LowestMonthlyCategories USING (month)
+);
