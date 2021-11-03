@@ -99,10 +99,10 @@ class Recommender:
             if (k <= 0):
                 return None
             cur = self.db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-            cur.execute("SET SEARCH_PATH TO Recommender;")
-            print(cur.statusmessage)
+            #cur.execute("SET SEARCH_PATH TO Recommender;")
+            #print(cur.statusmessage)
             cur.execute("DROP VIEW IF EXISTS AverageRatings;")
-            print(cur.statusmessage)
+            #print(cur.statusmessage)
             cur.execute(
                 """
                 CREATE VIEW AverageRatings AS
@@ -111,7 +111,7 @@ class Recommender:
                 GROUP BY IID;
                 """
             )
-            print(cur.statusmessage)
+            #print(cur.statusmessage)
             cur.execute(
                 """
                 SELECT IID
@@ -127,10 +127,10 @@ class Recommender:
                 """,
                 (k,k)
             )
-            print(cur.statusmessage)
+            #print(cur.statusmessage)
             accum = []
             for record in cur:
-                print(record, type(record), record['iid'], type(record['iid']))
+                #print(record, type(record), record['iid'], type(record['iid']))
                 accum.append(record['iid'])
             cur.close()
             self.db_conn.commit()
@@ -200,14 +200,14 @@ class Recommender:
         try:
             # TODO: Complete this method.
             cur = self.db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-            cur.execute("SET SEARCH_PATH TO Recommender;")
-            print(cur.statusmessage)
+            #cur.execute("SET SEARCH_PATH TO Recommender;")
+            #print(cur.statusmessage)
             cur.execute("DROP VIEW IF EXISTS ItemQuantitiesBought;")
-            print(cur.statusmessage)
+            #print(cur.statusmessage)
             cur.execute("DELETE FROM PopularItems;")
-            print(cur.statusmessage)
+            #print(cur.statusmessage)
             cur.execute("DELETE FROM DefinitiveRatings;")
-            print(cur.statusmessage)
+            #print(cur.statusmessage)
             cur.execute(
                 """
                 CREATE VIEW ItemQuantitiesBought AS
@@ -216,7 +216,7 @@ class Recommender:
                 GROUP BY Item.IID;
                 """
             )
-            print(cur.statusmessage)
+            #print(cur.statusmessage)
             cur.execute(
                 """
                 INSERT INTO PopularItems
@@ -233,7 +233,7 @@ class Recommender:
                 );
                 """
             )
-            print(cur.statusmessage)
+            #print(cur.statusmessage)
             cur.execute(
                 """
                 INSERT INTO DefinitiveRatings
@@ -245,7 +245,7 @@ class Recommender:
                 );
                 """
             )
-            print(cur.statusmessage)
+            #print(cur.statusmessage)
             cur.close()
             self.db_conn.commit()
             # for record in cur:
