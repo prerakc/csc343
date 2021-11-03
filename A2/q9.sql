@@ -17,7 +17,7 @@ newIID INTEGER := floor(random() * ((2147483647::bigint) - (-2147483648::bigint)
 BEGIN
     WHILE newIID IN (SELECT IID FROM Recommender.Item)
         LOOP
-            RAISE NOTICE 'IID: %', newIID;
+            RAISE NOTICE 'GENERATED IID ALREADY IN USE: %', newIID;
             newIID := floor(random() * ((2147483647::bigint) - (-2147483648::bigint) + 1::bigint) + (-2147483648::bigint))::int;
         END LOOP;
     RETURN newIID;
