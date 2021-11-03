@@ -255,6 +255,7 @@ class Recommender:
             #     cnumber = record['cnumber']
             #     card = record['card']
             #     print(f'{pid} | {cid} | {d} | {cnumber} | {card}')
+            return 0
             pass
         except pg.Error as e:
             print(e)
