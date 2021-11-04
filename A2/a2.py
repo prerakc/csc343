@@ -219,7 +219,98 @@ class Recommender:
         - cust is a CID that exists in the database.
         """
         try:
-            # TODO: Complete this method.
+        #connect to db
+            cur = self.db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        #get all popular items
+            cur.execute(
+                """
+                select DISTINCT iid from Review;
+                """
+            )
+            mostSold=(cur.fetchall())
+            itemQuantity = len(mostSold)
+
+        #get all raters
+            cur.execute(
+                """
+                select DISTINCT cid from Review;
+                """)
+            raters = (cur.fetchall())
+
+        #initiate RatingsTable
+            RT = RatingsTable(len(raters), itemQuantity)
+
+        #get all Ratings
+            cur.execute(
+                """
+                select * from Review;
+                """
+            )
+            ratings = (cur.fetchall())
+
+        #update ratings table with definitive Ratings info
+            for i in ratings:
+                RT.set_rating(i[0], i[1], i[2])
+
+        #find recommended curator
+            listRaters = []
+            for i in raters:
+                listRaters.append(i[0])
+            #remove customer from list of raters to find similar curator that isnt the customer himself
+            listRaters.remove(cust)
+            similarCurator = find_similar_curator(RT, listRaters, cust)
+
+        #return generic recommendations if there are no similar curators
+            if(similarCurator is None):
+                return self.recommend_generic(k)
+
+        #find the rated items by curator
+            cur.execute(
+                """
+                SELECT IID FROM Review where CID = %s
+                order by rating DESC;
+                """,
+                (similarCurator,)
+            )
+            
+            rated = cur.fetchall()
+
+        #find all items the customer bought
+            cur.execute(
+                """
+                SELECT DISTINCT IID FROM (LineItem natural join Purchase)
+                where CID = %s;
+                """,
+                (cust,)
+            )
+            alreadyBought = cur.fetchall()
+
+        #in-case there are more than k
+            newRated = []
+            for i in rated:
+                newRated.append(i[0])
+            rated = sorted(list(set(newRated)))[::-1][:k]
+        
+        #case: where customer bought nothing
+            if len(alreadyBought) == 0:
+                return rated
+            
+        #normal case:
+            # removing already bought items from the top rated items
+            for i in alreadyBought:
+                if(i[0] in rated):
+                    rated.remove(i[0])
+            
+            #if there is noting new to buy, recommend generic
+            if len(rated) == 0:
+                return self.recommend_generic(k)
+            #if there is something new to buy, recommend those new items
+            return rated
+            
+            pass
+        except pg.Error:
+            return None
             pass
         except pg.Error:
             return None
@@ -348,20 +439,24 @@ def find_similar_curator(ratings: RatingsTable,
 
 
 def sample_testing_function() -> None:
-    x= input("Type 0 for Prerak and anything else for Jaak:")
+    print("Type 0 for Prerak and anything else for Jaak:")
+    x= input()
     rec = Recommender()
-    if x == 0:
+    if x == '0':
+        print("hello prerak")
         # TODO: Change this to connect to your own database:
         rec.connect_db("csc343h-chaud496", "chaud496", "")
         # TODO: Test one or more methods here.
         print(rec.repopulate())
-        print(rec.recommend_generic(2))
+        print("hello prerak")
         rec.disconnect_db()
     else: 
+        print("hello jaak")
         # TODO: Change this to connect to your own database:
-        print(rec.connect_db("csc343h-subeeth1", "subeeth1", ""))
+        rec.connect_db("csc343h-subeeth1", "subeeth1", "")
         # TODO: Test one or more methods here.
         print(rec.repopulate())
+        print(rec.recommend(1599, 2))
         rec.disconnect_db()
     
 
