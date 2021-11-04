@@ -100,7 +100,6 @@ class Recommender:
             # TODO: Complete this method.
             if (k <= 0):
                 return None
-
             cur = self.db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             #cur.execute("SET SEARCH_PATH TO Recommender;")
             #accum.append(cur.statusmessage)
@@ -120,15 +119,25 @@ class Recommender:
             #cur.execute("SELECT * FROM DefinitiveRatings;")
             #accum.append(cur.statusmessage)
             #accum.append(cur.fetchall())
-            #cur.execute("DROP VIEW IF EXISTS AverageRatings;")
+            cur.execute("DROP VIEW IF EXISTS AverageRatingOfRatedItems;")
+            cur.execute("DROP VIEW IF EXISTS AverageRatingOfPopularItems;")
+            cur.execute("DROP VIEW IF EXISTS TopKAverageRatingsOfPopularItems;")
+            cur.execute("DROP VIEW IF EXISTS RecommendedItems;")
             #print(cur.statusmessage)
             #accum.append(cur.statusmessage)
             cur.execute(
                 """
-                CREATE VIEW AverageRatings AS
+                CREATE VIEW AverageRatingOfRatedItems AS
                 SELECT IID, avg(rating) as average
                 FROM Review
                 GROUP BY IID;
+                """
+            )
+            cur.execute(
+                """
+                CREATE VIEW AverageRatingOfPopularItems AS
+                SELECT IID, average
+                FROM PopularItems JOIN AverageRatingOfRatedItems USING (IID);
                 """
             )
             #print(cur.statusmessage)
@@ -156,24 +165,46 @@ class Recommender:
             #accum.append(cur.fetchall())
             cur.execute(
                 """
-                SELECT IID
-                FROM AverageRatings
-                WHERE average IN (
-                    SELECT DISTINCT average
-                    FROM AverageRatings
-                    ORDER BY average DESC
-                    LIMIT %s
-                )
-                ORDER BY IID ASC
+                CREATE VIEW TopKAverageRatingsOfPopularItems AS
+                SELECT DISTINCT average
+                FROM AverageRatingOfPopularItems
+                ORDER BY average DESC
                 LIMIT %s;
                 """,
-                (k,k)
+                (k,)
             )
+            cur.execute(
+                """
+                CREATE VIEW RecommendedItems AS
+                SELECT IID
+                FROM AverageRatingOfRatedItems
+                WHERE average IN (SELECT average FROM TopKAverageRatingsOfPopularItems)
+                """
+            )
+            # cur.execute(
+            #     """
+            #     SELECT IID
+            #     FROM AverageRatings
+            #     WHERE average IN (
+            #         SELECT DISTINCT average
+            #         FROM AverageRatings
+            #         ORDER BY average DESC
+            #         LIMIT %s
+            #     )
+            #     ORDER BY IID ASC
+            #     LIMIT %s;
+            #     """,
+            #     (k,k)
+            # )
+            cur.execute('SELECT * FROM RecommendedItems;')
             for record in cur:
                 #print(record, type(record), record['iid'], type(record['iid']))
                 accum.append(record['iid'])
             cur.close()
             self.db_conn.commit()
+            if len(accum) > k:
+                accum.sort()
+                return accum[0:k]
             return accum
             pass
         except pg.Error:
@@ -448,7 +479,7 @@ def sample_testing_function() -> None:
         rec.connect_db("csc343h-chaud496", "chaud496", "")
         # TODO: Test one or more methods here.
         print(rec.repopulate())
-        print("hello prerak")
+        print(rec.recommend_generic(2))
         rec.disconnect_db()
     else: 
         print("hello jaak")
