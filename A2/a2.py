@@ -289,8 +289,11 @@ class Recommender:
             for i in raters:
                 listRaters.append(i[0])
             #remove customer from list of raters to find similar curator that isnt the customer himself
+            print(listRaters)
             listRaters.remove(cust)
             similarCurator = find_similar_curator(RT, listRaters, cust)
+            print("the similar curator is")
+            print(similarCurator)
 
         #return generic recommendations if there are no similar curators
             if(similarCurator is None):
@@ -306,7 +309,8 @@ class Recommender:
             )
             
             rated = cur.fetchall()
-
+            print("the rated is:")
+            print(rated)
         #find all items the customer bought
             cur.execute(
                 """
@@ -316,12 +320,18 @@ class Recommender:
                 (cust,)
             )
             alreadyBought = cur.fetchall()
+            print("the aleady bought is:")
+            print(alreadyBought)
 
         #in-case there are more than k
             newRated = []
             for i in rated:
                 newRated.append(i[0])
-            rated = sorted(list(set(newRated)))[::-1][:k]
+            print("the unsorted rated list is:")
+            print(rated)
+            rated = sorted(list(set(newRated)))
+            print("the sorted rated list is:")
+            print(rated)
         
         #case: where customer bought nothing
             if len(alreadyBought) == 0:
@@ -332,12 +342,17 @@ class Recommender:
             for i in alreadyBought:
                 if(i[0] in rated):
                     rated.remove(i[0])
+            print("without removed items")
+            print(rated)
             
             #if there is noting new to buy, recommend generic
-            if len(rated) == 0:
+            length = len(rated)
+            if length == 0:
                 return self.recommend_generic(k)
+            elif(length < k):
+                return rated
             #if there is something new to buy, recommend those new items
-            return rated
+            return rated[:k]
             
             pass
         except pg.Error:
@@ -487,7 +502,7 @@ def sample_testing_function() -> None:
         rec.connect_db("csc343h-subeeth1", "subeeth1", "")
         # TODO: Test one or more methods here.
         print(rec.repopulate())
-        print(rec.recommend(1599, 2))
+        print(rec.recommend(1599, 1))
         rec.disconnect_db()
     
 
