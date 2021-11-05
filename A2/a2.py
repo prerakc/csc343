@@ -15,7 +15,6 @@ import psycopg2.extras
 
 from ratings import RatingsTable
 
-from time import sleep
 
 class Recommender:
     """A simple recommender that can work with data conforming to the schema in
@@ -95,120 +94,54 @@ class Recommender:
           (Do not call repopulate in this method.)
         - k > 0
         """
-        accum = []
+        
         try:
             # TODO: Complete this method.
-            if (k <= 0):
-                return None
+
+            # list to store IIDs of recommended items
+            accum = []
+
+            # set up cursor
             cur = self.db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-            #cur.execute("SET SEARCH_PATH TO Recommender;")
-            #accum.append(cur.statusmessage)
-            #sleep(5)
-            #cur.execute("SHOW SEARCH_PATH;")
-            #print(cur.statusmessage)
-            #accum.append(cur.fetchall())
-            #cur.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'recommender';")
-            #accum.append(cur.statusmessage)
-            #accum.append(cur.fetchall())
-            #cur.execute("SELECT * FROM Curator;")
-            #accum.append(cur.statusmessage)
-            #accum.append(cur.fetchall())
-            #cur.execute("SELECT * FROM PopularItems;")
-            #accum.append(cur.statusmessage)
-            #accum.append(cur.fetchall())
-            #cur.execute("SELECT * FROM DefinitiveRatings;")
-            #accum.append(cur.statusmessage)
-            #accum.append(cur.fetchall())
-            cur.execute("DROP VIEW IF EXISTS AverageRatingOfRatedItems;")
+
+            # drop intermediate views
             cur.execute("DROP VIEW IF EXISTS AverageRatingOfPopularItems;")
-            cur.execute("DROP VIEW IF EXISTS TopKAverageRatingsOfPopularItems;")
-            cur.execute("DROP VIEW IF EXISTS RecommendedItems;")
-            #print(cur.statusmessage)
-            #accum.append(cur.statusmessage)
-            cur.execute(
-                """
-                CREATE VIEW AverageRatingOfRatedItems AS
-                SELECT IID, avg(rating) as average
-                FROM Review
-                GROUP BY IID;
-                """
-            )
+
+            # get average rating of every popular item
             cur.execute(
                 """
                 CREATE VIEW AverageRatingOfPopularItems AS
-                SELECT IID, average
-                FROM PopularItems JOIN AverageRatingOfRatedItems USING (IID);
+                SELECT IID, avg(rating) AS average
+                FROM PopularItems JOIN Review USING (IID)
+                GROUP BY IID;
                 """
             )
-            #print(cur.statusmessage)
-            #accum.append(cur.statusmessage)
-            #cur.execute("SELECT * FROM AverageRatings;")
-            #accum.append(cur.statusmessage)
-            #accum.append(cur.fetchall())
-            # cur.execute(
-            #     """
-            #     SELECT IID
-            #     FROM AverageRatings
-            #     WHERE average IN (
-            #         SELECT DISTINCT average
-            #         FROM AverageRatings
-            #         ORDER BY average DESC
-            #         LIMIT %s
-            #     )
-            #     ORDER BY IID ASC
-            #     LIMIT %s;
-            #     """,
-            #     (k,k)
-            # )
-            #print(cur.statusmessage)
-            #accum.append(cur.statusmessage)
-            #accum.append(cur.fetchall())
+
+            # order popular item average ratings in descending order
+            # in case of ties, order IIDs in ascending order
+            # get top k rows
             cur.execute(
-                """
-                CREATE VIEW TopKAverageRatingsOfPopularItems AS
-                SELECT DISTINCT average
+                """                
+                SELECT IID
                 FROM AverageRatingOfPopularItems
-                ORDER BY average DESC
+                ORDER BY average DESC, IID ASC
                 LIMIT %s;
                 """,
                 (k,)
             )
-            cur.execute(
-                """
-                CREATE VIEW RecommendedItems AS
-                SELECT IID
-                FROM AverageRatingOfRatedItems
-                WHERE average IN (SELECT average FROM TopKAverageRatingsOfPopularItems)
-                """
-            )
-            # cur.execute(
-            #     """
-            #     SELECT IID
-            #     FROM AverageRatings
-            #     WHERE average IN (
-            #         SELECT DISTINCT average
-            #         FROM AverageRatings
-            #         ORDER BY average DESC
-            #         LIMIT %s
-            #     )
-            #     ORDER BY IID ASC
-            #     LIMIT %s;
-            #     """,
-            #     (k,k)
-            # )
-            cur.execute('SELECT * FROM RecommendedItems;')
+
+            # store IIDs of recommended items
             for record in cur:
-                #print(record, type(record), record['iid'], type(record['iid']))
                 accum.append(record['iid'])
+
+            # close cursor and commit changes
             cur.close()
             self.db_conn.commit()
-            if len(accum) > k:
-                accum.sort()
-                return accum[0:k]
+
+            # return IIDs of recommended items
             return accum
             pass
         except pg.Error:
-            #print(accum)
             return None
 
     def recommend(self, cust: int, k: int) -> Optional[List[int]]:
@@ -250,113 +183,103 @@ class Recommender:
         - cust is a CID that exists in the database.
         """
         try:
-        #connect to db
+            # TODO: Complete this method.
+
+            # set up cursor
             cur = self.db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-        #get all popular items
+            # get popular items
+            cur.execute('SELECT * FROM PopularItems;')
+            popularItems = [record['iid'] for record in cur.fetchall()]
+            print(popularItems)
+            numPopularItems = len(popularItems)
+            print(numPopularItems)
+
+            # get curators
+            cur.execute('SELECT * FROM Curator;')
+            curators = [record['cid'] for record in cur.fetchall()]
+            print(curators)
+            numCurators = len(curators)
+            print(numCurators)
+
+            # initalize ratings table
+            ratingsTable = RatingsTable(numCurators + 1, numPopularItems)
+
+            # get curators' ratings on popular items
+            cur.execute('SELECT * FROM DefinitiveRatings;')
+            curatorRatings = cur.fetchall()
+            print(curatorRatings)
+
+            # get customer's ratings on popular items
             cur.execute(
                 """
-                select DISTINCT iid from Review;
-                """
-            )
-            mostSold=(cur.fetchall())
-            itemQuantity = len(mostSold)
-
-        #get all raters
-            cur.execute(
-                """
-                select DISTINCT cid from Review;
-                """)
-            raters = (cur.fetchall())
-
-        #initiate RatingsTable
-            RT = RatingsTable(len(raters), itemQuantity)
-
-        #get all Ratings
-            cur.execute(
-                """
-                select * from Review;
-                """
-            )
-            ratings = (cur.fetchall())
-
-        #update ratings table with definitive Ratings info
-            for i in ratings:
-                RT.set_rating(i[0], i[1], i[2])
-
-        #find recommended curator
-            listRaters = []
-            for i in raters:
-                listRaters.append(i[0])
-            #remove customer from list of raters to find similar curator that isnt the customer himself
-            print(listRaters)
-            listRaters.remove(cust)
-            similarCurator = find_similar_curator(RT, listRaters, cust)
-            print("the similar curator is")
-            print(similarCurator)
-
-        #return generic recommendations if there are no similar curators
-            if(similarCurator is None):
-                return self.recommend_generic(k)
-
-        #find the rated items by curator
-            cur.execute(
-                """
-                SELECT IID FROM Review where CID = %s
-                order by rating DESC;
-                """,
-                (similarCurator,)
-            )
-            
-            rated = cur.fetchall()
-            print("the rated is:")
-            print(rated)
-        #find all items the customer bought
-            cur.execute(
-                """
-                SELECT DISTINCT IID FROM (LineItem natural join Purchase)
-                where CID = %s;
+                SELECT IID, rating
+                FROM Review
+                WHERE CID = %s AND IID IN (
+                    SELECT *
+                    FROM PopularItems
+                );
                 """,
                 (cust,)
             )
-            alreadyBought = cur.fetchall()
-            print("the aleady bought is:")
-            print(alreadyBought)
+            customerRatings = cur.fetchall()
+            print(customerRatings)
 
-        #in-case there are more than k
-            newRated = []
-            for i in rated:
-                newRated.append(i[0])
-            print("the unsorted rated list is:")
-            print(rated)
-            rated = sorted(list(set(newRated)))
-            print("the sorted rated list is:")
-            print(rated)
-        
-        #case: where customer bought nothing
-            if len(alreadyBought) == 0:
-                return rated
-            
-        #normal case:
-            # removing already bought items from the top rated items
-            for i in alreadyBought:
-                if(i[0] in rated):
-                    rated.remove(i[0])
-            print("without removed items")
-            print(rated)
-            
-            #if there is noting new to buy, recommend generic
-            length = len(rated)
-            if length == 0:
+            # add curator ratings to ratings table
+            for i in curatorRatings:
+                ratingsTable.set_rating(i[0], i[1], i[2])
+
+            # add customer ratings to ratings table
+            for i in customerRatings:
+                ratingsTable.set_rating(cust, i[0], i[1])
+
+            # find curator most similar to customer
+            mostSimilarCurator = find_similar_curator(ratingsTable, curators, cust)
+            print(mostSimilarCurator)
+
+            # if no similar curator is found, return the generic recommendations
+            if mostSimilarCurator == None:
                 return self.recommend_generic(k)
-            elif(length < k):
-                return rated
-            #if there is something new to buy, recommend those new items
-            return rated[:k]
             
-            pass
-        except pg.Error:
-            return None
+            # items bought by customer
+            cur.execute("DROP VIEW IF EXISTS ItemsBoughtByCustomer;")
+
+            cur.execute(
+                """
+                CREATE VIEW ItemsBoughtByCustomer AS
+                SELECT DISTINCT IID
+                FROM Purchase JOIN LineItem USING (PID)
+                WHERE CID = %s;
+                """,
+                (cust,)
+            )
+
+            # for the items rated by the most similar curator
+            # that have not already been purchased by the customer,
+            # order the reviews in descending order of rating and
+            # in the event of ties, by ascending order of IID
+            cur.execute(
+                """
+                SELECT IID
+                FROM Review
+                WHERE CID = %s AND IID NOT IN (
+                    SELECT *
+                    FROM ItemsBoughtByCustomer
+                )
+                ORDER BY rating DESC, IID ASC
+                LIMIT %s;
+                """,
+                (mostSimilarCurator, k)
+            )
+            recommendedItems = [record['iid'] for record in cur.fetchall()]
+
+            # if the customer has bought all the recommended items,
+            # return the generic recommendations
+            if recommendedItems == []:
+                return self.recommend_generic(k)
+
+            # otherwise, return the recommended items 
+            return recommendedItems
             pass
         except pg.Error:
             return None
@@ -377,15 +300,16 @@ class Recommender:
         """
         try:
             # TODO: Complete this method.
+
+            # set up cursor
             cur = self.db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-            #cur.execute("SET SEARCH_PATH TO Recommender;")
-            #print(cur.statusmessage)
+
+            # drop intermediate view and purge effected tables
             cur.execute("DROP VIEW IF EXISTS ItemQuantitiesBought;")
-            #print(cur.statusmessage)
             cur.execute("DELETE FROM PopularItems;")
-            #print(cur.statusmessage)
             cur.execute("DELETE FROM DefinitiveRatings;")
-            #print(cur.statusmessage)
+
+            # for each item, get its category and total quantity bought
             cur.execute(
                 """
                 CREATE VIEW ItemQuantitiesBought AS
@@ -394,7 +318,8 @@ class Recommender:
                 GROUP BY Item.IID;
                 """
             )
-            #print(cur.statusmessage)
+
+            # get the top 2 most bought items in each category
             cur.execute(
                 """
                 INSERT INTO PopularItems
@@ -411,7 +336,8 @@ class Recommender:
                 );
                 """
             )
-            #print(cur.statusmessage)
+
+            # get the curators' ratings on these popular items
             cur.execute(
                 """
                 INSERT INTO DefinitiveRatings
@@ -423,20 +349,15 @@ class Recommender:
                 );
                 """
             )
-            #print(cur.statusmessage)
+
+            # close cursor and commit changes
             cur.close()
             self.db_conn.commit()
-            # for record in cur:
-            #     pid = record['pid']
-            #     cid = record['cid']
-            #     d = record['d']
-            #     cnumber = record['cnumber']
-            #     card = record['card']
-            #     print(f'{pid} | {cid} | {d} | {cnumber} | {card}')
+            
+            # return success code
             return 0
             pass
-        except pg.Error as e:
-            print(e)
+        except pg.Error:
             return -1
 
 
@@ -494,19 +415,18 @@ def sample_testing_function() -> None:
         rec.connect_db("csc343h-chaud496", "chaud496", "")
         # TODO: Test one or more methods here.
         print(rec.repopulate())
-        print(rec.recommend_generic(2))
+        #print(rec.recommend_generic(2))
         rec.disconnect_db()
     else: 
         print("hello jaak")
         # TODO: Change this to connect to your own database:
-        rec.connect_db("csc343h-subeeth1", "subeeth1", "")
+        #rec.connect_db("csc343h-subeeth1", "subeeth1", "")
+        rec.connect_db("csc343h-chaud496", "chaud496", "")
         # TODO: Test one or more methods here.
         print(rec.repopulate())
-        print(rec.recommend(1599, 1))
+        print(rec.recommend(1599, 2))
         rec.disconnect_db()
     
-
-
 
 if __name__ == '__main__':
     # TODO: Put your testing code here, or call testing functions such as
