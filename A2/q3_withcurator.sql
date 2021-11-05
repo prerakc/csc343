@@ -62,3 +62,10 @@ insert into q3
     SELECT *
     FROM ReviewedAll
 );
+
+-- comment below out when submitting; needed to generate Curator with testing manually
+insert into Curator
+(
+    SELECT CID
+    FROM q3
+);
