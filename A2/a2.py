@@ -273,6 +273,10 @@ class Recommender:
             )
             recommendedItems = [record['iid'] for record in cur.fetchall()]
 
+            # close cursor and commit changes
+            cur.close()
+            self.db_conn.commit()
+
             # if the customer has bought all the recommended items,
             # return the generic recommendations
             if recommendedItems == []:
