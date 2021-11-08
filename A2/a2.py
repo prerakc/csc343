@@ -96,8 +96,6 @@ class Recommender:
         """
         
         try:
-            # TODO: Complete this method.
-
             # list to store IIDs of recommended items
             accum = []
 
@@ -183,24 +181,18 @@ class Recommender:
         - cust is a CID that exists in the database.
         """
         try:
-            # TODO: Complete this method.
-
             # set up cursor
             cur = self.db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
             # get popular items
             cur.execute('SELECT * FROM PopularItems;')
             popularItems = [record['iid'] for record in cur.fetchall()]
-            print(popularItems)
             numPopularItems = len(popularItems)
-            print(numPopularItems)
 
             # get curators
             cur.execute('SELECT * FROM Curator;')
             curators = [record['cid'] for record in cur.fetchall()]
-            print(curators)
             numCurators = len(curators)
-            print(numCurators)
 
             # initalize ratings table
             ratingsTable = RatingsTable(numCurators + 1, numPopularItems)
@@ -208,7 +200,6 @@ class Recommender:
             # get curators' ratings on popular items
             cur.execute('SELECT * FROM DefinitiveRatings;')
             curatorRatings = cur.fetchall()
-            print(curatorRatings)
 
             # get customer's ratings on popular items
             cur.execute(
@@ -223,7 +214,6 @@ class Recommender:
                 (cust,)
             )
             customerRatings = cur.fetchall()
-            print(customerRatings)
 
             # add curator ratings to ratings table
             for i in curatorRatings:
@@ -235,7 +225,6 @@ class Recommender:
 
             # find curator most similar to customer
             mostSimilarCurator = find_similar_curator(ratingsTable, curators, cust)
-            print(mostSimilarCurator)
 
             # if no similar curator is found, return the generic recommendations
             if mostSimilarCurator == None:
@@ -303,8 +292,6 @@ class Recommender:
           PopularItems table.
         """
         try:
-            # TODO: Complete this method.
-
             # set up cursor
             cur = self.db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
