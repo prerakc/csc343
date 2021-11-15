@@ -1,0 +1,690 @@
+\documentclass{article}
+\usepackage{fullpage}
+\usepackage[normalem]{ulem}
+\usepackage{amstext,amsmath,amssymb}
+\usepackage{pifont}% http://ctan.org/pkg/pifont
+\usepackage{xcolor}
+
+\newcommand{\var}[1]{\mathit{#1}}
+
+
+\setlength{\parskip}{6pt}
+
+\begin{document}
+
+~~~\vspace{-2.0cm}
+
+\noindent
+University of Toronto\\
+{\sc csc}343, Fall 2021\\[10pt]
+{\LARGE\bf Assignment 1: \newline Prerak Chaudhari | 1005114760 \\[1mm] Jaakulan Subeethakumar | 1005225757}
+
+%----------------------------------------------------------------------------------------------------------------------
+\section*{Part 1: Queries}
+
+\begin{enumerate}
+\item   % ----------
+\textit{Extreme grades:} For each assignment find the highest and the lowest grade any group received.
+Report the assignment ID, highest grade, and lowest grade.
+If an assignment has no grades, it won't appear in the result.
+
+{~}\\ % This puts a newline in to move the answer down a bit from the text above.
+{\large %This increase in font size makes the subscripts much more readable.
+-- What grade a group got on their assignment \\[5pt]
+$
+GroupMarks(\var{aID, gID, mark}) := 
+	\Pi_{aID, gID, mark}
+	(Group \bowtie Result) \\[10pt]
+$
+
+-- Compare two groups of the same assignment \\[5pt]
+$
+GroupMarksCP(\var{aID, gID1, mark1, gID2, mark2}) := \\[5pt]
+    \hspace*{1cm}
+	\Pi_{T1.aID, T1.gID, T1.mark, T2.gID, T2.mark}
+	(\sigma_{T1.aID = T2.aID} 
+	[(\rho_{T1}GroupMarks) \times (\rho_{T2}GroupMarks)]) \\[10pt]
+$
+
+-- All groups that did not get the max grade \\[5pt]
+$
+NotMax(\var{gID}) :=
+	\Pi_{gID1}
+	(\sigma_{mark1 < mark2} 
+	GroupMarksCP) \\[10pt]
+$
+
+-- Groups that got the maximum grade \\[5pt]
+$
+gIDMax(\var{gID}) := 
+	\Pi_{\var{gID}} 
+	Group
+	-
+	NotMax \\[10pt]
+$
+
+-- All groups that did not get the min grade \\[5pt]
+$
+NotMin(\var{gID}) :=
+	\Pi_{gID1}
+	(\sigma_{mark1 > mark2} 
+	GroupMarksCP) \\[10pt]
+$
+
+-- Groups that got the minimum grade \\[5pt]
+$
+gIDMin(\var{gID}) := 
+	\Pi_{\var{gID}} 
+	Group
+	-
+	NotMin \\[10pt]
+$
+
+-- Highest grade for each assignment \\[5pt]
+$
+AssignmentHighMarks(\var{aID, highest}) := 
+	\Pi_{\var{aID, mark}} 
+	(GroupMarks \bowtie gIDMax) \\[10pt]
+$
+
+-- Lowest grade for each assignment \\[5pt]
+$
+AssignmentLowMarks(\var{aID, lowest}) := 
+	\Pi_{\var{aID, mark}} 
+	(GroupMarks \bowtie gIDMin) \\[10pt]
+$
+
+-- Grade extremes for each assignment \\[5pt]
+$
+AssignmentGradeExtremes(\var{aID, highest, lowest}) := \\[5pt]
+    \hspace*{1cm}
+	AssignmentHighMarks \bowtie AssignmentLowMarks \\[10pt]
+$
+} % End of font size increase.
+
+\newpage
+
+\item   % ----------
+\textit{Procrastinators:}
+For each assignment (that has at least one required file) 
+and each group (that has more than one member),
+find the group member whose earliest submission of a required file came latest among the group members.
+Report the assignment ID, group ID, and userName.
+Groups that have submitted no required file on an assignment will not be reported for that assignment.
+
+{~}\\ % This puts a newline in to move the answer down a bit from the text above.
+{\large %This increase in font size makes the subscripts much more readable.
+-- List user memberships for multi-person groups \\[5pt]
+$
+MultiPersonGroupMembership(\var{userName, gID, status}) := \\[5pt]
+    \hspace*{1cm}
+	\Pi_{T1.userName, T1.gID, T1.status}
+	(\sigma_{\substack{T1.userName \neq T2.userName \\ \wedge \\ T1.gID = T2.gID}} 
+	[(\rho_{T1}Membership) \times (\rho_{T2}Membership)]) \\[10pt]
+$
+
+-- Required submissions by multi-person groups \\[5pt]
+$
+RequiredSubmission(\var{aID, sID, fileName, userName, gID, when}) := \\[5pt]
+    \hspace*{1cm}
+	Required \bowtie Submission \bowtie \Pi_{gID}MultiPersonGroupMembership \\[10pt]
+$
+
+-- User submissions that were not their earliest for that particular assignment \\[5pt]
+$
+NotEarliestUserSubmission(\var{aID, sID, fileName, userName, gID, when}) := \\[5pt]
+    \hspace*{1cm}
+	\Pi_{\substack{T1.aID, \\ T1.sID, \\ T1.fileName, \\ T1.userName, \\ T1.gID, \\ T1.when}}
+	(\sigma_{\substack{T1.when > T2.when \\ \wedge \\ T1.userName = T2.userName \\ \wedge \\ T1.gID = T2.gID}} 
+	[(\rho_{T1}RequiredSubmission) \times (\rho_{T2}RequiredSubmission)]) \\[10pt]
+$
+
+-- User submissions that were their earliest for that particular assignment \\[5pt]
+$
+EarliestUserSubmission(\var{aID, sID, fileName, userName, gID, when}) := \\[5pt]
+    \hspace*{1cm}
+	RequiredSubmission - NotEarliestUserSubmission \\[10pt]
+$
+
+-- Earliest user submissions that were not the latest of their group \\[5pt]
+$
+NotLatestSubmission(\var{aID, sID, fileName, userName, gID, when}) := \\[5pt]
+    \hspace*{1cm}
+	\Pi_{\substack{T1.aID, \\ T1.sID, \\ T1.fileName, \\ T1.userName, \\ T1.gID, \\ T1.when}}
+	(\sigma_{\substack{T1.when < T2.when \\ \wedge \\ T1.gID = T2.gID}} 
+	[(\rho_{T1}EarliestUserSubmission) \times (\rho_{T2}EarliestUserSubmission)]) \\[10pt]
+$
+
+-- Earliest user submissions that were the latest of their group \\[5pt]
+$
+LatestSubmission(\var{aID, gID, userName}) := \\[5pt]
+    \hspace*{1cm}
+    \Pi_{aID, gID, userName}
+	(EarliestUserSubmission - NotLatestSubmission) \\[10pt]
+$
+} % End of font size increase.
+
+\newpage
+
+\item   % ----------
+\textit{Good students:}
+Find every student who meets the following conditions:
+(a) they have a grade on all the assignments,
+(b) their grades are all at least 70, and
+(c) if we consider assignments in order by their due date, their grades have never gone down.
+Report the userName of these students.
+
+{~}\\ % This puts a newline in to move the answer down a bit from the text above.
+{\large %This increase in font size makes the subscripts much more readable.
+-- Groups that got a mark of at least 70 \\[5pt]
+$
+AtLeast70(\var{gID, mark}) :=
+    \Pi_{gID, mark}
+	(\sigma_{mark \geq 70}
+	Result) \\[10pt]
+$
+
+-- Student membership tuples of said groups \\[5pt]
+$
+InterestedMemberships(\var{userName, gID, status}) :=
+    Membership \bowtie \Pi_{gID} AtLeast70 \\[10pt]
+$
+
+-- Student membership tuples that weren't graded or had a mark less than 70 \\[5pt]
+$
+Failures(\var{userName, gID, status}) :=
+    Membership - InterestedMemberships \\[10pt]
+$
+
+-- Students who meet criterion (a) and (b) \\[5pt]
+$
+PromisingUsers(\var{userName}) :=
+    \Pi_{userName} Membership - \Pi_{userName} Failures \\[10pt]
+$
+
+-- userName and gID of said users \\[5pt]
+$
+PromisingUserGroups(\var{userName, gID}) :=
+    \Pi_{userName, gID} Membership \bowtie PromisingUsers \\[10pt]
+$
+
+-- Tuples that contain the necessary attributes to determine criterion (c) \\[5pt]
+$
+InterestedAttributes(\var{userName, gID, mark, aID, due}) := \\[5pt]
+    \hspace*{1cm}
+	[PromisingUserGroups \bowtie AtLeast70 \bowtie \Pi_{gID, aID} Group] \bowtie \Pi_{aID, due} Assignment \\[10pt]
+$
+
+-- Students whose marks went down as per criterion (c) \\[5pt]
+$
+MarksWentDown(\var{userName}) := \\[5pt]
+    \hspace*{1cm}
+	\Pi_{userName}
+	[\sigma_{\substack{T1.aID \neq T2.aID \\ \wedge \\ T1.gID \neq T2.gID \\ \wedge \\ T1.userName = T2.userName \\ \wedge \\ T1.due < T2.due \\ \wedge \\ T1.mark > T2.mark}} 
+	([\rho_{T1}InterestedAttributes] \times [\rho_{T2}InterestedAttributes])] \\[10pt]
+$
+
+-- Usernames of students who meet criterion (a), (b) and (c) \\[5pt]
+$
+GoodStudents(\var{userName}) :=
+	PromisingUsers - MarksWentDown \\[10pt]
+$
+} % End of font size increase.
+
+\newpage
+
+\item   % ---------- 
+\textit{Well-used tags:} 
+Let's say that a tag is ``well used" on an assignment if at least 3 different TAs
+used that tag for at least 3 different groups.
+Find the assignment whose number of well used tags was the highest.
+Report the assignment ID and assignment description.
+If there was a tie for highest, report them all.
+
+{~}\\ % This puts a newline in to move the answer down a bit from the text above.
+{\large %This increase in font size makes the subscripts much more readable.
+Cannot be expressed. \\[10pt]
+} % End of font size increase.
+
+\newpage
+
+\item   % ---------- 
+\textit{Different group sizes:} 
+Find every student who has worked in a group of three (three including themself) on some assignment,
+a group of two on some assignment (two including themself), and
+has also worked alone on some assignment.
+Report their username,
+highest mark on a group-of-three assignment,
+highest mark on a group-of-two assignment,
+and highest mark on a group-of-one assignment.
+
+{~}\\ % This puts a newline in to move the answer down a bit from the text above.
+{\large %This increase in font size makes the subscripts much more readable.
+-- Rename Membership relation to T1 for later use in Cartesian products \\[5pt]
+$
+T1(\var{userName, gID, status}) :=
+    \rho_{T1} Membership \\[10pt]
+$
+
+-- Rename Membership relation to T2 for later use in Cartesian products \\[5pt]
+$
+T2(\var{userName, gID, status}) :=
+    \rho_{T2} Membership \\[10pt]
+$
+
+-- Rename Membership relation to T3 for later use in Cartesian products \\[5pt]
+$
+T3(\var{userName, gID, status}) :=
+    \rho_{T3} Membership \\[10pt]
+$
+
+-- Rename Membership relation to T4 for later use in Cartesian products \\[5pt]
+$
+T4(\var{userName, gID, status}) :=
+    \rho_{T4} Membership \\[10pt]
+$
+
+-- Groups with at least 4 students \\[5pt]
+$
+AtLeast4(\var{user1, gID1, user2, gID2, user3, gID3, user4, gID4}) := \\[5pt]
+    \hspace*{1cm}
+    \Pi_{\substack{T1.userName, \\ T1.gID, \\ T2.userName, \\ T2.gID, \\ T3.userName, \\ T3.gID, \\ T4.userName, \\ T4.gID}}
+	[\sigma_{
+	    \substack{
+	        T1.gID = T2.gID = T3.gID = T4.gID \\
+	        \wedge \\
+	        T1.userName \neq T2.userName \\
+	        \wedge \\
+	        T1.userName \neq T3.userName \\
+	        \wedge \\
+	        T1.userName \neq T4.userName \\
+	        \wedge \\
+	        T2.userName \neq T3.userName \\
+	        \wedge \\
+	        T2.userName \neq T4.userName \\
+	        \wedge \\
+	        T3.userName \neq T4.userName
+	    }
+	}
+	(T1 \times T2 \times T3 \times T4)] \\[10pt]
+$
+
+-- Groups with at least 3 students \\[5pt]
+$
+AtLeast3(\var{user1, gID1, user2, gID2, user3, gID3}) := \\[5pt]
+    \hspace*{1cm}
+    \Pi_{\substack{T1.userName, \\ T1.gID, \\ T2.userName, \\ T2.gID, \\ T3.userName, \\ T3.gID}}
+	[\sigma_{
+	    \substack{
+	        T1.gID = T2.gID = T3.gID \\
+	        \wedge \\
+	        T1.userName \neq T2.userName \\
+	        \wedge \\
+	        T1.userName \neq T3.userName \\
+	        \wedge \\
+	        T2.userName \neq T3.userName
+	    }
+	}
+	(T1 \times T2 \times T3)] \\[10pt]
+$
+
+\newpage
+
+-- Groups with at least 2 students \\[5pt]
+$
+AtLeast2(\var{user1, gID1, user2, gID2}) := \\[5pt]
+    \hspace*{1cm}
+    \Pi_{\substack{T1.userName, \\ T1.gID, \\ T2.userName, \\ T2.gID}}
+	[\sigma_{
+	    \substack{
+	        T1.gID = T2.gID \\
+	        \wedge \\
+	        T1.userName \neq T2.userName
+	    }
+	}
+	(T1 \times T2)] \\[10pt]
+$
+
+-- Groups with exactly 3 students \\[5pt]
+$
+Exactly3(\var{userName, gID}) :=
+    \Pi_{user1, gID1} AtLeast3 - \Pi_{user1, gID1} AtLeast4 \\[10pt]
+$
+
+-- Groups with exactly 2 students \\[5pt]
+$
+Exactly2(\var{userName, gID}) :=
+    \Pi_{user1, gID1} AtLeast2 - \Pi_{user1, gID1} AtLeast3 \\[10pt]
+$
+
+-- Groups with exactly 1 student \\[5pt]
+$
+Exactly1(\var{userName, gID}) := \\[5pt]
+    \hspace*{1cm}
+    \rho_{AtLeast1(user1, gID1)}(\Pi_{userName, gID} Membership) - \Pi_{user1, gID1} AtLeast2, \\[10pt]
+$
+
+-- Students who have worked in trio, duo and solo groups \\[5pt]
+$
+StudentsInAll3(\var{userName}) :=
+    [\Pi_{userName}Exactly3] \cap [\Pi_{userName}Exactly2] \cap [\Pi_{userName}Exactly1] \\[10pt]
+$
+
+-- Marks of these students while in a group of 3 \\[5pt]
+$
+TrioMarks(\var{userName, trioMark}) := \\[5pt]
+    \hspace*{1cm}
+    \Pi_{userName, mark}
+    (StudentsInAll3 \bowtie Exactly3 \bowtie Result) \\[10pt]
+$
+
+-- Marks of these students while in a group of 2 \\[5pt]
+$
+DuoMarks(\var{userName, duoMark}) := \\[5pt]
+    \hspace*{1cm}
+    \Pi_{userName, mark}
+    (StudentsInAll3 \bowtie Exactly2 \bowtie Result) \\[10pt]
+$
+
+-- Marks of these students while in a group of 1 \\[5pt]
+$
+SoloMarks(\var{userName, soloMark}) := \\[5pt]
+    \hspace*{1cm}
+    \Pi_{userName, mark}
+    (StudentsInAll3 \bowtie Exactly1 \bowtie Result) \\[10pt]
+$
+
+\newpage
+
+-- Non-highest trio marks of these students \\[5pt]
+$
+NotHighestTrioMarks(\var{userName, trioMark}) := \\[5pt]
+    \hspace*{1cm}
+    \Pi_{T1.userName, T1.trioMark}
+    (\sigma_{\substack{T1.userName \neq T2.userName \\ \wedge \\ T1.trioMark < T2.trioMark}}
+    [(\rho_{T1}TrioMarks) \times (\rho_{T2}TrioMarks)]) \\[10pt]
+$
+
+-- Highest trio marks of these students \\[5pt]
+$
+HighestTrioMarks(\var{userName, trioMark}) :=
+    TrioMarks - NotHighestTrioMarks \\[10pt]
+$
+
+-- Non-highest duo marks of these students \\[5pt]
+$
+NotHighestDuoMarks(\var{userName, duoMark}) := \\[5pt]
+    \hspace*{1cm}
+    \Pi_{T1.userName, T1.duoMark}
+    (\sigma_{\substack{T1.userName \neq T2.userName \\ \wedge \\ T1.duoMark < T2.duoMark}}
+    [(\rho_{T1}DuoMarks) \times (\rho_{T2}DuoMarks)]) \\[10pt]
+$
+
+-- Highest duo marks of these students \\[5pt]
+$
+HighestDuoMarks(\var{userName, duoMark}) :=
+    DuoMarks - NotHighestDuoMarks \\[10pt]
+$
+
+-- Non-highest solo marks of these students \\[5pt]
+$
+NotHighestSoloMarks(\var{userName, soloMark}) := \\[5pt]
+    \hspace*{1cm}
+    \Pi_{T1.userName, T1.soloMark}
+    (\sigma_{\substack{T1.userName \neq T2.userName \\ \wedge \\ T1.soloMark < T2.soloMark}}
+    [(\rho_{T1}SoloMarks) \times (\rho_{T2}SoloMarks)]) \\[10pt]
+$
+
+-- Highest solo marks of these students \\[5pt]
+$
+HighestSoloMarks(\var{userName, soloMark}) :=
+    SoloMarks - NotHighestSoloMarks \\[10pt]
+$
+
+-- Report the student's username and their highest solo, duo and trio group grades \\[5pt]
+$
+DesiredRelation(\var{userName, soloMark, duoMark, trioMark}) := \\[5pt]
+    \hspace*{1cm}
+    HighestSoloMarks \bowtie HighestDuoMarks \bowtie HighestTrioMarks \\[10pt]
+$
+} % End of font size increase.
+
+\newpage
+
+\item   % ---------- 
+\textit{Consistent groups:}
+Find all pairs of groups that, for two different assignments,
+have the exact same students in them,
+and earned the exact same mark.
+Report the two group IDs, the two assignment IDs, and the mark.
+For example, you might report that group 7249 on Assignment 2 and group 8116 on Assignment 4
+had the same group members and earned the same grade of 84. 
+Do not include the same pair of groups twice as pseudo-duplicates
+({\it e.g.,} Do not include both (7249, 8116) and (8116, 7249))
+
+{~}\\ % This puts a newline in to move the answer down a bit from the text above.
+{\large %This increase in font size makes the subscripts much more readable.
+-- The marks each student got on their assignments \\[5pt]
+$
+UserMarks(\var{aID, gID, userName, mark}) := \\[5pt]
+    \hspace*{1cm}
+	\Pi_{aID, gID, userName, mark} (Group \bowtie Membership \bowtie Result) \\[10pt]
+$
+
+-- Groups with at least 1 common student who got the same grade on both assignments \\[5pt]
+$
+Actual(\var{gID1, userName, gID2}) := \\[5pt]
+    \hspace*{1cm}
+	\Pi_{T1.gID, T1.userName, T2.gID}
+	[\sigma_{\substack{T1.aID \neq T2.aID \\ \wedge \\ T1.gID \neq T2.gID \\ \wedge \\ T1.userName = T2.userName \\ \wedge \\ T1.mark = T2.mark}}
+	([\rho_{T1}UserMarks] \times [\rho_{T2}UserMarks])] \\[10pt]
+$
+
+-- Ideally, the group pairings from the previous relation share the same students \\[5pt]
+$
+Expected(\var{gID1, userName, gID2}) := \\[5pt]
+    \hspace*{1cm}
+	\Pi_{gID1, userName, gID2}
+	(\Pi_{gID1, gID2} Actual \bowtie_{gID1 = gID} Membership) \\[10pt]
+$
+
+-- Group pairings that got the same grade but do not share the same members \\[5pt]
+$
+Failures(\var{gID1, gID2}) :=
+	\Pi_{gID1, gID2}
+	(Expected - Actual) \\[10pt]
+$
+
+-- Pair each tuple with itself, flipping the order of the gIDs \\[5pt]
+$
+TwoWayFailuresCP(\var{gID1, gID2, gID3, gID4}) := \\[5pt]
+    \hspace*{1cm}
+	\Pi_{\substack{T1.gID1, \\ T1.gID2, \\ T2.gID2, \\ T2.gID1}}
+	(\sigma_{\substack{T1.gID1 = T2.gID1 \\ \wedge \\ T1.gID2 = T2.gID2}} 
+	[(\rho_{T1}Failures) \times (\rho_{T2}Failures)]) \\[10pt]
+$
+
+-- Bidirectional failures of group pairings \\[5pt]
+$
+TwoWayFailures(\var{gID1, gID2}) := \\[5pt]
+    \hspace*{1cm}
+    [\Pi_{gID1, gID2}
+    (TwoWayFailuresCP)]
+    \cup
+    [\rho_{T1(gID1, gID2)}
+    (\Pi_{gID3, gID4} TwoWayFailuresCP)] \\[10pt]
+$
+
+-- Pairing groups with the same members and mark \\[5pt]
+$
+Success(\var{gID1, gID2}) :=
+    \Pi_{gID1, gID2} Actual - TwoWayFailures \\[10pt]
+$
+
+-- Group pairings with no pseudo-duplicates \\[5pt]
+$
+NoDups(\var{gID1, gID2}) :=
+    \sigma_{gID1 < gID2} Success \\[10pt]
+$
+
+-- Report the assignment ids, group ids and mark \\[5pt]
+$
+DesiredRelation(\var{aID1, gID1, aID2, gID2, mark}) := \\[5pt]
+    \hspace*{1cm}
+    \Pi_{\substack{T1.aID, \\ gID1, \\ T2.aID, \\ gID2, \\ mark}}
+    [\sigma_{\substack{gID1 = T1.gID \\ \wedge \\ gID2 = T2.gID \\ \wedge \\ gID1 = Result.gID}}
+    (NoDups \times [\rho_{T1} Group] \times [\rho_{T2} Group] \times Result)] \\[10pt]
+$
+} % End of font size increase.
+
+\newpage
+
+\item   % ----------
+\textit{Prolific TA:}
+For each assignment due in 2020, find the TA who was grader for the highest number of groups of all TAs.
+Report the TA, the assignment, and the highest grade that TA has given on the assignment.
+If there are multiple TAs tied for grading the most groups on an assignment, report them all.
+You may assume that for all assignments due in 2020, every group has received a grade.
+
+{~}\\ % This puts a newline in to move the answer down a bit from the text above.
+{\large %This increase in font size makes the subscripts much more readable.
+Cannot be expressed. \\[10pt]
+} % End of font size increase.
+
+\newpage
+
+\item   % ----------
+\textit{Worked with top student:} 
+Find all students who've been in a group with a student who has the highest mark in the entire database.
+(We said ``a student" rather than ``the student" because there could be several students tied for highest mark;
+we are looking for students who've worked with any of them.)
+For each of them, report their user name, their grade on the last assignment
+(last according to due dates), and the number of \textit{different} students they have been in a group with.
+
+{~}\\ % This puts a newline in to move the answer down a bit from the text above.
+{\large %This increase in font size makes the subscripts much more readable.
+Cannot be expressed. \\[10pt]
+} % End of font size increase.
+
+\end{enumerate}
+
+
+
+
+
+
+%----------------------------------------------------------------------------------------------------------------------
+\newpage
+\section*{Part 2: Additional Integrity Constraints}
+
+\begin{enumerate}
+
+\item   % ----------
+A grader cannot be assigned to mark the same student for more than one assignment.
+
+{~}\\ % This puts a newline in to move the answer down a bit from the text above.
+{\large %This increase in font size makes the subscripts much more readable.
+-- Student-Grader pairings for each group \\[5pt]
+$
+Pairings(\var{aID, gID, student, grader}) := \\[5pt]
+    \hspace*{1cm}
+    \Pi_{\substack{aID, \\ Group.gID, \\ Membership.userName, \\ Grader.userName}}
+	[\sigma_{Group.gID = Grader.gID = Membership.gID}
+	(Group \times Grader \times Membership)] \\[10pt]
+$
+
+$
+\sigma_{\substack{T1.aID \neq T2.aID \\ \wedge \\ T1.gID \neq T2.gID \\ \wedge \\ T1.student = T2.student \\ \wedge \\ T1.grader = T2.grader}} 
+[(\rho_{T1}Pairings) \times (\rho_{T2}Pairings)] = \emptyset \\[10pt]
+$
+} % End of font size increase.
+
+\newpage
+
+\item   % ----------
+Students are not allowed to ``overinvite": 
+You can't invite more people to join your group for an assignment
+than the maximum number of students allowed to work together on that assignment.
+
+{~}\\ % This puts a newline in to move the answer down a bit from the text above.
+{\large %This increase in font size makes the subscripts much more readable.
+Cannot be expressed. \\[10pt]
+} % End of font size increase.
+
+\newpage
+
+\item   % ----------
+A group who submits one or more files after the deadline cannot receive a mark over 80
+unless the grader is an instructor.
+
+{~}\\ % This puts a newline in to move the answer down a bit from the text above.
+{\large %This increase in font size makes the subscripts much more readable.
+-- When a group submitted a file \\[5pt]
+$
+SubmissionTimes(\var{gID, when}) :=
+	\Pi_{gID, when} Submission \\[10pt]
+$
+
+-- All group submissions that weren't their latest \\[5pt]
+$
+NotLatestSubmission(\var{gID, when}) := \\[5pt]
+    \hspace*{1cm}
+	\Pi_{T1.gID, T1.when}
+	[\sigma_{\substack{T1.gID = T2.gID \\ \wedge \\ T1.when < T2.when}}
+	([\rho_{T1}SubmissionTimes] \times [\rho_{T2}SubmissionTimes])] \\[10pt]
+$
+
+-- Latest submission time for each group \\[5pt]
+$
+LatestSubmission(\var{gID, when}) :=
+	SubmissionTimes - NotLatestSubmission \\[10pt]
+$
+
+-- Append assignment ID and due date onto latest submission tuples \\[5pt]
+$
+LatestAssignmentSubmission(\var{aID, gID, dueDate, submissionDate}) := \\[5pt]
+    \hspace*{1cm}
+	\Pi_{aID, gID, due, when}
+	(\Pi_{aID, gID, when} [LatestSubmission \bowtie Group] \bowtie Assignment) \\[10pt]
+$
+
+-- Groups who submitted past the due date \\[5pt]
+$
+PastDueDate(\var{gID}) :=
+    \Pi_{gID}
+    (\sigma_{submissionDate > dueDate}
+    LatestAssignmentSubmission) \\[10pt]
+$
+
+-- What grade these groups got \\[5pt]
+$
+GroupGrades(\var{gID, mark}) :=
+    \Pi_{gID, mark}
+    (PastDueDate \bowtie Result) \\[10pt]
+$
+
+-- Late submitting groups who got a grade over 80 \\[5pt]
+$
+Over80(\var{gID}) :=
+    \Pi_{gID}
+    (\sigma_{mark > 80}
+    GroupGrades) \\[10pt]
+$
+
+-- The graders of said groups \\[5pt]
+$
+Markers(\var{gID, userName, type}) :=
+    \Pi_{gID, userName, type}
+    (Over80 \bowtie Grader \bowtie User) \\[10pt]
+$
+
+$
+\Pi_{type} Markers \subseteq \{``instructor"\} \\[10pt]
+$
+} % End of font size increase.
+
+\end{enumerate}
+
+\end{document}
+
+
