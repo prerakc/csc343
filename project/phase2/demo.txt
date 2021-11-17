@@ -1,4 +1,4 @@
--- load schema and data
+-- load schema and cleaned data
 
 \i schema.ddl
 
