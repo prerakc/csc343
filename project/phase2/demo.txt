@@ -1,11 +1,359 @@
-\COPY Continents FROM 'continents.csv' WITH DELIMITER ',' CSV HEADER;
+-- load schema and data
 
-\COPY Countries FROM 'countries.csv' WITH DELIMITER ',' CSV HEADER;
+\i schema.ddl
 
-\COPY Manufacturers FROM 'car-makers.csv' WITH DELIMITER ',' CSV HEADER;
+/* psql:schema.ddl:3: NOTICE:  drop cascades to 6 other objects
+DETAIL:  drop cascades to table continents
+drop cascades to table countries
+drop cascades to table manufacturers
+drop cascades to table models
+drop cascades to table cars
+drop cascades to table parameters
+DROP SCHEMA
+CREATE SCHEMA
+SET
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+COPY 5
+COPY 15
+COPY 22
+COPY 35
+COPY 405
+COPY 405 */
 
-\COPY Models FROM 'model-list.csv' WITH DELIMITER ',' CSV HEADER;
 
-\COPY Cars FROM 'car-names.csv' WITH DELIMITER ',' CSV HEADER;
+-- list relations
 
-\COPY Parameters FROM 'cars-data.csv' WITH DELIMITER ',' CSV HEADER;
+\d
+
+/*                 List of relations
+    Schema     |     Name      | Type  |  Owner   
+---------------+---------------+-------+----------
+ projectschema | cars          | table | chaud496
+ projectschema | continents    | table | chaud496
+ projectschema | countries     | table | chaud496
+ projectschema | manufacturers | table | chaud496
+ projectschema | models        | table | chaud496
+ projectschema | parameters    | table | chaud496
+(6 rows) */
+
+
+-- describe Cars relation
+
+\d Cars
+
+/*              Table "projectschema.cars"
+ Column  |  Type   | Collation | Nullable | Default 
+---------+---------+-----------+----------+---------
+ carid   | integer |           | not null | 
+ modelid | integer |           | not null | 
+ make    | text    |           | not null | 
+Indexes:
+    "cars_pkey" PRIMARY KEY, btree (carid)
+Foreign-key constraints:
+    "cars_modelid_fkey" FOREIGN KEY (modelid) REFERENCES models(modelid)
+Referenced by:
+    TABLE "parameters" CONSTRAINT "parameters_carid_fkey" FOREIGN KEY (carid) REFERENCES cars(carid) */
+
+
+-- count number of rows in Cars relation
+
+SELECT count(*) FROM Cars;
+
+/*  count 
+-------
+   405
+(1 row) */
+
+
+-- show sample of the Cars relation
+
+SELECT * FROM Cars
+LIMIT 15;
+
+/*  carid | modelid |                make                
+-------+---------+------------------------------------
+     1 |       7 | 'chevrolet chevelle malibu'
+     2 |       4 | 'buick skylark 320'
+     3 |      24 | 'plymouth satellite'
+     4 |       1 | 'amc rebel sst'
+     5 |      13 | 'ford torino'
+     6 |      13 | 'ford galaxie 500'
+     7 |       7 | 'chevrolet impala'
+     8 |      24 | 'plymouth fury iii'
+     9 |      25 | 'pontiac catalina'
+    10 |       1 | 'amc ambassador dpl'
+    11 |       9 | 'citroen ds-21 pallas'
+    12 |       7 | 'chevrolet chevelle concours (sw)'
+    13 |      13 | 'ford torino (sw)'
+    14 |      24 | 'plymouth satellite (sw)'
+    15 |       1 | 'amc rebel sst (sw)'
+(15 rows) */
+
+
+-- describe Continents relation
+
+\d Continents
+
+/*              Table "projectschema.continents"
+    Column     |  Type   | Collation | Nullable | Default 
+---------------+---------+-----------+----------+---------
+ continentid   | integer |           | not null | 
+ continentname | text    |           | not null | 
+Indexes:
+    "continents_pkey" PRIMARY KEY, btree (continentid)
+Referenced by:
+    TABLE "countries" CONSTRAINT "countries_continentid_fkey" FOREIGN KEY (continentid) REFERENCES continents(continentid) */
+
+
+-- count number of rows in Continents relation
+
+SELECT count(*) FROM Continents;
+
+/*  count 
+-------
+     5
+(1 row) */
+
+
+-- show sample of the Continents relation
+
+SELECT * FROM Continents
+LIMIT 15;
+
+/*  continentid | continentname 
+-------------+---------------
+           1 | 'america'
+           2 | 'europe'
+           3 | 'asia'
+           4 | 'africa'
+           5 | 'australia'
+(5 rows) */
+
+
+-- describe Countries relation
+
+\d Countries
+
+/*             Table "projectschema.countries"
+   Column    |  Type   | Collation | Nullable | Default 
+-------------+---------+-----------+----------+---------
+ countryid   | integer |           | not null | 
+ countryname | text    |           | not null | 
+ continentid | integer |           | not null | 
+Indexes:
+    "countries_pkey" PRIMARY KEY, btree (countryid)
+Foreign-key constraints:
+    "countries_continentid_fkey" FOREIGN KEY (continentid) REFERENCES continents(continentid)
+Referenced by:
+    TABLE "manufacturers" CONSTRAINT "manufacturers_countryid_fkey" FOREIGN KEY (countryid) REFERENCES countries(countryid) */
+
+
+-- count number of rows in Countries relation
+
+SELECT count(*) FROM Countries;
+
+/*  count 
+-------
+    15
+(1 row) */
+
+
+-- show sample of the Countries relation
+
+SELECT * FROM Countries
+LIMIT 15;
+
+/*  countryid |  countryname  | continentid 
+-----------+---------------+-------------
+         1 | 'usa'         |           1
+         2 | 'germany'     |           2
+         3 | 'france'      |           2
+         4 | 'japan'       |           3
+         5 | 'italy'       |           2
+         6 | 'sweden'      |           2
+         7 | 'uk'          |           2
+         8 | 'korea'       |           3
+         9 | 'russia'      |           2
+        10 | 'nigeria'     |           4
+        11 | 'australia'   |           5
+        12 | 'new zealand' |           5
+        13 | 'egypt'       |           4
+        14 | 'mexico'      |           1
+        15 | 'brazil'      |           1
+(15 rows) */
+
+
+-- describe Manufacturers relation
+
+\d Manufacturers
+
+/*             Table "projectschema.manufacturers"
+     Column     |  Type   | Collation | Nullable | Default 
+----------------+---------+-----------+----------+---------
+ manufacturerid | integer |           | not null | 
+ nickname       | text    |           | not null | 
+ fullname       | text    |           | not null | 
+ countryid      | integer |           | not null | 
+Indexes:
+    "manufacturers_pkey" PRIMARY KEY, btree (manufacturerid)
+Foreign-key constraints:
+    "manufacturers_countryid_fkey" FOREIGN KEY (countryid) REFERENCES countries(countryid)
+Referenced by:
+    TABLE "models" CONSTRAINT "models_manufacturerid_fkey" FOREIGN KEY (manufacturerid) REFERENCES manufacturers(manufacturerid) */
+
+
+-- count number of rows in Manufacturers relation
+
+SELECT count(*) FROM Manufacturers;
+
+/*  count 
+-------
+    22
+(1 row) */
+
+
+-- show sample of the Manufacturers relation
+
+SELECT * FROM Manufacturers
+LIMIT 15;
+
+/*  manufacturerid |    nickname    |         fullname         | countryid 
+----------------+----------------+--------------------------+-----------
+              1 | 'amc'          | 'American Motor Company' |         1
+              2 | 'volkswagen'   | 'Volkswagen'             |         2
+              3 | 'bmw'          | 'BMW'                    |         2
+              4 | 'gm'           | 'General Motors'         |         1
+              5 | 'ford'         | 'Ford Motor Company'     |         1
+              6 | 'chrysler'     | 'Chrysler'               |         1
+              7 | 'citroen'      | 'Citroen'                |         3
+              8 | 'nissan'       | 'Nissan Motors'          |         4
+              9 | 'fiat'         | 'Fiat'                   |         5
+             11 | 'honda'        | 'Honda'                  |         4
+             12 | 'mazda'        | 'Mazda'                  |         4
+             13 | 'daimler benz' | 'Daimler Benz'           |         2
+             14 | 'opel'         | 'Opel'                   |         2
+             15 | 'peugeaut'     | 'Peugeaut'               |         3
+             16 | 'renault'      | 'Renault'                |         3
+(15 rows) */
+
+
+-- describe Models relation
+
+\d Models
+
+/*                Table "projectschema.models"
+     Column     |  Type   | Collation | Nullable | Default 
+----------------+---------+-----------+----------+---------
+ modelid        | integer |           | not null | 
+ manufacturerid | integer |           | not null | 
+ modelname      | text    |           | not null | 
+Indexes:
+    "models_pkey" PRIMARY KEY, btree (modelid)
+Foreign-key constraints:
+    "models_manufacturerid_fkey" FOREIGN KEY (manufacturerid) REFERENCES manufacturers(manufacturerid)
+Referenced by:
+    TABLE "cars" CONSTRAINT "cars_modelid_fkey" FOREIGN KEY (modelid) REFERENCES models(modelid) */
+
+
+-- count number of rows in Models relation
+
+SELECT count(*) FROM Models;
+
+/*  count 
+-------
+    35
+(1 row) */
+
+
+-- show sample of the Models relation
+
+SELECT * FROM Models
+LIMIT 15;
+
+/*  modelid | manufacturerid |  modelname  
+---------+----------------+-------------
+       1 |              1 | 'amc'
+       2 |              2 | 'audi'
+       3 |              3 | 'bmw'
+       4 |              4 | 'buick'
+       5 |              4 | 'cadillac'
+       6 |              5 | 'capri'
+       7 |              4 | 'chevrolet'
+       8 |              6 | 'chrysler'
+       9 |              7 | 'citroen'
+      10 |              8 | 'datsun'
+      11 |              6 | 'dodge'
+      12 |              9 | 'fiat'
+      13 |              5 | 'ford'
+      15 |             11 | 'honda'
+      16 |             12 | 'mazda'
+(15 rows) */
+
+
+-- describe Parameters relation
+
+\d Parameters
+
+/*                  Table "projectschema.parameters"
+    Column    |       Type       | Collation | Nullable | Default 
+--------------+------------------+-----------+----------+---------
+ carid        | integer          |           | not null | 
+ mpg          | double precision |           |          | 
+ cylinders    | integer          |           | not null | 
+ displacement | double precision |           | not null | 
+ horsepower   | integer          |           |          | 
+ weight       | integer          |           | not null | 
+ acceleration | double precision |           | not null | 
+ year         | integer          |           | not null | 
+Indexes:
+    "parameters_pkey" PRIMARY KEY, btree (carid)
+Check constraints:
+    "parameters_acceleration_check" CHECK (acceleration > 0::double precision)
+    "parameters_cylinders_check" CHECK (cylinders > 0)
+    "parameters_displacement_check" CHECK (displacement > 0::double precision)
+    "parameters_horsepower_check" CHECK (horsepower > 0)
+    "parameters_mpg_check" CHECK (mpg > 0::double precision)
+    "parameters_weight_check" CHECK (weight > 0)
+    "parameters_year_check" CHECK (year > 0)
+Foreign-key constraints:
+    "parameters_carid_fkey" FOREIGN KEY (carid) REFERENCES cars(carid) */
+
+
+-- count number of rows in Parameters relation
+
+SELECT count(*) FROM Parameters;
+
+/*  count 
+-------
+   405
+(1 row) */
+
+
+-- show sample of the Parameters relation
+
+SELECT * FROM Parameters
+LIMIT 15;
+
+/*  carid | mpg | cylinders | displacement | horsepower | weight | acceleration | year 
+-------+-----+-----------+--------------+------------+--------+--------------+------
+     1 |  18 |         8 |          307 |        130 |   3504 |           12 | 1970
+     2 |  15 |         8 |          350 |        165 |   3693 |         11.5 | 1970
+     3 |  18 |         8 |          318 |        150 |   3436 |           11 | 1970
+     4 |  16 |         8 |          304 |        150 |   3433 |           12 | 1970
+     5 |  17 |         8 |          302 |        140 |   3449 |         10.5 | 1970
+     6 |  15 |         8 |          429 |        198 |   4341 |           10 | 1970
+     7 |  14 |         8 |          454 |        220 |   4354 |            9 | 1970
+     8 |  14 |         8 |          440 |        215 |   4312 |          8.5 | 1970
+     9 |  14 |         8 |          455 |        225 |   4425 |           10 | 1970
+    10 |  15 |         8 |          390 |        190 |   3850 |          8.5 | 1970
+    11 |     |         4 |          133 |        115 |   3090 |         17.5 | 1970
+    12 |     |         8 |          350 |        165 |   4142 |         11.5 | 1970
+    13 |     |         8 |          351 |        153 |   4034 |           11 | 1970
+    14 |     |         8 |          383 |        175 |   4166 |         10.5 | 1970
+    15 |     |         8 |          360 |        175 |   3850 |           11 | 1970
+(15 rows) */

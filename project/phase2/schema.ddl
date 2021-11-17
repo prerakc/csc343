@@ -75,12 +75,24 @@ CREATE TABLE Cars (
 CREATE TABLE Parameters (
 	carID INT NOT NULL,
 	mpg FLOAT CHECK (mpg > 0),
-	cylinders INT NOT NULL,
+	cylinders INT NOT NULL CHECK (cylinders > 0),
 	displacement FLOAT NOT NULL CHECK (displacement > 0),
 	horsepower INT CHECK (horsepower > 0),
 	weight INT NOT NULL CHECK (weight > 0),
 	acceleration FLOAT NOT NULL CHECK (acceleration > 0),
-	year INT NOT NULL CHECK (year >= 0),
+	year INT NOT NULL CHECK (year > 0),
 	PRIMARY KEY (carID),
 	FOREIGN KEY (carID) REFERENCES Cars(carID)
 );
+
+\COPY Continents FROM 'continents.csv' WITH DELIMITER ',' CSV HEADER
+
+\COPY Countries FROM 'countries.csv' WITH DELIMITER ',' CSV HEADER
+
+\COPY Manufacturers FROM 'car-makers.csv' WITH DELIMITER ',' CSV HEADER
+
+\COPY Models FROM 'model-list.csv' WITH DELIMITER ',' CSV HEADER
+
+\COPY Cars FROM 'car-names.csv' WITH DELIMITER ',' CSV HEADER
+
+\COPY Parameters FROM 'cars-data.csv' WITH DELIMITER ',' CSV HEADER
