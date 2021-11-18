@@ -1,5 +1,4 @@
--- Change nothing in this file.
-
+-- Facilitate repeated importing
 DROP SCHEMA IF EXISTS projectschema CASCADE;
 CREATE SCHEMA projectschema;
 SET SEARCH_PATH TO projectschema;
@@ -85,14 +84,10 @@ CREATE TABLE Parameters (
 	FOREIGN KEY (carID) REFERENCES Cars(carID)
 );
 
+-- Import cleaned data
 \COPY Continents FROM 'continents.csv' WITH DELIMITER ',' CSV HEADER
-
 \COPY Countries FROM 'countries.csv' WITH DELIMITER ',' CSV HEADER
-
 \COPY Manufacturers FROM 'car-makers.csv' WITH DELIMITER ',' CSV HEADER
-
 \COPY Models FROM 'model-list.csv' WITH DELIMITER ',' CSV HEADER
-
 \COPY Cars FROM 'car-names.csv' WITH DELIMITER ',' CSV HEADER
-
 \COPY Parameters FROM 'cars-data.csv' WITH DELIMITER ',' CSV HEADER
