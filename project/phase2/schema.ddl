@@ -18,7 +18,7 @@ CREATE TABLE Continents (
 -- continentID is the identifier for continents
 CREATE TABLE Countries(
 	countryID INT NOT NULL,
-	countryName TEXT NOT NULL,
+	countryName TEXT NOT NULL UNIQUE,
 	continentID INT NOT NULL,
 	PRIMARY KEY(countryID),
 	FOREIGN KEY (continentID) REFERENCES Continents(continentID)
@@ -31,8 +31,8 @@ CREATE TABLE Countries(
 -- countryID is the the car manufacturer’s home country
 CREATE TABLE Manufacturers (
 	manufacturerID INT NOT NULL,
-	nickName TEXT NOT NULL,
-	fullName TEXT NOT NULL,
+	nickName TEXT NOT NULL UNIQUE,
+	fullName TEXT NOT NULL UNIQUE,
 	countryID INT NOT NULL,
 	PRIMARY KEY (manufacturerID),
 	FOREIGN KEY (countryID) REFERENCES Countries(countryID) 
@@ -45,7 +45,7 @@ CREATE TABLE Manufacturers (
 CREATE TABLE Models (
 	modelID INT NOT NULL,
 	manufacturerID INT NOT NULL,
-	modelName TEXT NOT NULL,
+	modelName TEXT NOT NULL UNIQUE,
 	PRIMARY KEY(modelID),
 	FOREIGN KEY (manufacturerID) REFERENCES Manufacturers(manufacturerID)
 );
