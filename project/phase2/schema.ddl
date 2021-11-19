@@ -8,7 +8,7 @@ SET SEARCH_PATH TO projectschema;
 -- continentName is the continent name
 CREATE TABLE Continents (
 	continentID INT NOT NULL,
-	continentName TEXT NOT NULL,
+	continentName TEXT NOT NULL UNIQUE,
 	PRIMARY KEY (continentID)
 );
 

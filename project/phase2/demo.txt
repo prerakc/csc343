@@ -38,6 +38,7 @@ csc343h-chaud496=> \d Continents
  continentname | text    |           | not null | 
 Indexes:
     "continents_pkey" PRIMARY KEY, btree (continentid)
+    "continents_continentname_key" UNIQUE CONSTRAINT, btree (continentname)
 Referenced by:
     TABLE "countries" CONSTRAINT "countries_continentid_fkey" FOREIGN KEY (continentid) REFERENCES continents(continentid)
 
