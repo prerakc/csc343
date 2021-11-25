@@ -17,6 +17,6 @@
 \echo
 \i queries-iq2.sql
 \echo
-\echo  -------------------- Investigative Question 2: ------------------
+\echo  -------------------- Investigative Question 3: ------------------
 \echo
 \i queries-iq3.sql
