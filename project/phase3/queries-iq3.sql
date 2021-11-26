@@ -1,15 +1,9 @@
-DROP VIEW IF EXISTS highestYearlyCylinder CASCADE;
-DROP VIEW IF EXISTS lowestYearlyCylinder CASCADE;
-DROP VIEW IF EXISTS carHYC CASCADE;
-DROP VIEW IF EXISTS carLYC CASCADE;
-DROP VIEW IF EXISTS lowEfficiencyMakehelper CASCADE;
-DROP VIEW IF EXISTS highEfficiencyMakehelper CASCADE;
-DROP VIEW IF EXISTS highCylEfficiency CASCADE;
-DROP VIEW IF EXISTS lowCylEfficiency CASCADE;
-DROP TABLE IF EXISTS Q3Report CASCADE;
+-- Set search path to project's schema and drop investivative query table
+SET SEARCH_PATH TO projectschema;
+DROP TABLE IF EXISTS iq3 CASCADE;
 
-
-CREATE TABLE Q3Report (
+-- Create investivative query table
+CREATE TABLE iq3 (
     Year INT NOT NULL,
     A_make TEXT NOT NULL,
     A_displacement Int NOT NULL,
@@ -22,6 +16,17 @@ CREATE TABLE Q3Report (
     MPG_Difference FLOAT NOT NULL,
     displacement_Difference INT NOT NULL
 );
+
+-- Drop intermediate views
+DROP VIEW IF EXISTS highestYearlyCylinder CASCADE;
+DROP VIEW IF EXISTS lowestYearlyCylinder CASCADE;
+DROP VIEW IF EXISTS carHYC CASCADE;
+DROP VIEW IF EXISTS carLYC CASCADE;
+DROP VIEW IF EXISTS lowEfficiencyMakehelper CASCADE;
+DROP VIEW IF EXISTS highEfficiencyMakehelper CASCADE;
+DROP VIEW IF EXISTS highCylEfficiency CASCADE;
+DROP VIEW IF EXISTS lowCylEfficiency CASCADE;
+DROP VIEW IF EXISTS joinHelper CASCADE;
 
 -- Define views for your intermediate steps here:
 
@@ -99,7 +104,8 @@ select A_year as year, A_make, A_displacement, A_mpg, A_cylinders,
  from highCylEfficiency cross join lowCylEfficiency 
  where A_year = B_year;
 
-insert into Q3Report
+-- Insert into investivative query table
+insert into iq3
 (
     SELECT year,
     A_make,
@@ -114,3 +120,6 @@ insert into Q3Report
     ROUND((B_displacement - A_displacement)::numeric, 2) as displacement_Difference   
     FROM joinHelper
 );
+
+-- Show investivative query's results
+SELECT * FROM iq3;
