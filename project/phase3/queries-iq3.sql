@@ -19,8 +19,8 @@ CREATE TABLE Q3Report (
     B_displacement Int NOT NULL,
     B_mpg FLOAT NOT NULL,
     B_cylinders INT NOT NULL,
-    MPG_Difference FLOAT NOT NULL CHECK (MPG_Difference > 0),
-    displacement_Difference INT NOT NULL CHECK (displacement_Difference > 0)
+    MPG_Difference FLOAT NOT NULL,
+    displacement_Difference INT NOT NULL
 );
 
 -- Define views for your intermediate steps here:
@@ -110,7 +110,7 @@ insert into Q3Report
     B_displacement,
     B_mpg,
     B_cylinders,
-    ROUND(ABS(A_mpg - B_mpg)::numeric, 2) as MPG_Difference,
-    ROUND(ABS(A_displacement - B_displacement)::numeric, 2) as displacement_Difference   
+    ROUND((B_mpg - B_mpg)::numeric, 2) as MPG_Difference,
+    ROUND((B_displacement - A_displacement)::numeric, 2) as displacement_Difference   
     FROM joinHelper
 );
