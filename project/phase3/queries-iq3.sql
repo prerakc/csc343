@@ -110,7 +110,7 @@ insert into Q3Report
     B_displacement,
     B_mpg,
     B_cylinders,
-    ROUND((B_mpg - B_mpg)::numeric, 2) as MPG_Difference,
+    ROUND((B_mpg - A_mpg)::numeric, 2) as MPG_Difference,
     ROUND((B_displacement - A_displacement)::numeric, 2) as displacement_Difference   
     FROM joinHelper
 );
