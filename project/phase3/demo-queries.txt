@@ -20,3 +20,12 @@
 \echo  -------------------- Investigative Question 3: ------------------
 \echo
 \i queries-iq3.sql
+select * from highestYearlyCylinder;
+select * from lowestYearlyCylinder;
+select * from carHYC;
+select * from carLYC;
+select * from lowEfficiencyMakehelper;
+select * from highEfficiencyMakehelper;
+select * from highCylEfficiency;
+select * from lowCylEfficiency;
+select * from joinHelper;
