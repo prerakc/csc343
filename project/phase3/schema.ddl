@@ -66,7 +66,7 @@ CREATE TABLE Cars (
 -- carID is the identifier for cars
 -- mpg is the mileage per gallon for each car
 -- cylinders is the number of engine cylinders the car has
--- displacement is the displacement volume in cubic inches for each car
+-- engine displacement is the displacement volume in cubic inches for each car
 -- horsepower car's engine power in horsepower
 -- weight is the car’s weight in pounds
 -- acceleration is the car's 0-60mph acceleration time in seconds
@@ -85,9 +85,9 @@ CREATE TABLE Parameters (
 );
 
 -- Import cleaned data
-\COPY Continents FROM 'C:/Users/Jaakulan S/Documents/GitHub/csc343/project/phase3/continents.csv' WITH DELIMITER ',' CSV HEADER
-\COPY Countries FROM 'C:/Users/Jaakulan S/Documents/GitHub/csc343/project/phase3/countries.csv' WITH DELIMITER ',' CSV HEADER
-\COPY Manufacturers FROM 'C:/Users/Jaakulan S/Documents/GitHub/csc343/project/phase3/car-makers.csv' WITH DELIMITER ',' CSV HEADER
-\COPY Models FROM 'C:/Users/Jaakulan S/Documents/GitHub/csc343/project/phase3/model-list.csv' WITH DELIMITER ',' CSV HEADER
-\COPY Cars FROM 'C:/Users/Jaakulan S/Documents/GitHub/csc343/project/phase3/car-names.csv' WITH DELIMITER ',' CSV HEADER
-\COPY Parameters FROM 'C:/Users/Jaakulan S/Documents/GitHub/csc343/project/phase3/cars-data.csv' WITH DELIMITER ',' CSV HEADER
+\COPY Continents FROM 'continents.csv' WITH DELIMITER ',' CSV HEADER
+\COPY Countries FROM 'countries.csv' WITH DELIMITER ',' CSV HEADER
+\COPY Manufacturers FROM 'car-makers.csv' WITH DELIMITER ',' CSV HEADER
+\COPY Models FROM 'model-list.csv' WITH DELIMITER ',' CSV HEADER
+\COPY Cars FROM 'car-names.csv' WITH DELIMITER ',' CSV HEADER
+\COPY Parameters FROM 'cars-data.csv' WITH DELIMITER ',' CSV HEADER

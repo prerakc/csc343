@@ -3,6 +3,14 @@ SET SEARCH_PATH TO projectschema;
 DROP TABLE IF EXISTS iq2 CASCADE;
 
 -- Create investivative query table
+
+-- Tuples describing the car with the best power to weight ratio for every year:
+-- year is the year the car was made
+-- make is the car’s make description
+-- cylinders is the number of cylinders
+-- horsepower is the car's horsepower
+-- weight is the car's weight
+-- ratio is the car's power to weight ratio
 CREATE TABLE iq2 (
     year INT NOT NULL,
     make TEXT NOT NULL,
@@ -17,11 +25,21 @@ DROP VIEW IF EXISTS NoHorsepowerNull CASCADE;
 DROP VIEW IF EXISTS MetricsPerCar CASCADE;
 
 -- Define views for your intermediate steps here:
+
+-- All tuples in Parameters relation that do not have a NULL in the horsepower column:
+-- See schema.ddl for explanation of columns in Parameters relation
 CREATE VIEW NoHorsepowerNull AS
 SELECT *
 FROM Parameters
 WHERE horsepower IS NOT NULL;
 
+-- Desired metrics per car in dataset:
+-- year is the year the car was made
+-- make is the car’s make description
+-- cylinders is the number of cylinders
+-- horsepower is the car's horsepower
+-- weight is the car's weight
+-- ratio is the car's power to weight ratio
 CREATE VIEW MetricsPerCar AS
 SELECT
     year,
@@ -43,6 +61,3 @@ INSERT INTO iq2
         WHERE Y.year = X.year
     )
 );
-
--- Show investivative query's results
-SELECT * FROM iq2;

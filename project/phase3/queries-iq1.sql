@@ -3,6 +3,13 @@ SET SEARCH_PATH TO projectschema;
 DROP TABLE IF EXISTS iq1 CASCADE;
 
 -- Create investivative query table
+
+-- Tuples representing the continents for each year with the best average MPG:
+-- year is the year in the dataset
+-- continentName is the continent
+-- numModels is how many different car models were produced
+-- avgMPG is the average MPG of the produced models
+-- avgAccel is the average acceleration of the produced models
 CREATE TABLE iq1 (
     year INT NOT NULL,
     continentName TEXT NOT NULL,
@@ -15,6 +22,13 @@ CREATE TABLE iq1 (
 DROP VIEW IF EXISTS MetricsPerYearContinent CASCADE;
 
 -- Define views for your intermediate steps here:
+
+-- Desired yearly metrics for every continent in the dataset:
+-- year is the year in the dataset
+-- continentName is the continent
+-- numModels is how many different car models were produced
+-- avgMPG is the average MPG of the produced models
+-- avgAccel is the average acceleration of the produced models
 CREATE VIEW MetricsPerYearContinent AS
 SELECT year, continentName, count(*) as numModels, avg(mpg) AS avgMPG, avg(acceleration) as avgAccel
 FROM
@@ -43,6 +57,3 @@ INSERT INTO iq1
         WHERE Y.year = X.year
     )
 );
-
--- Show investivative query's results
-SELECT * FROM iq1;

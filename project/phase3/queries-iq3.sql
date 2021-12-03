@@ -3,6 +3,21 @@ SET SEARCH_PATH TO projectschema;
 DROP TABLE IF EXISTS iq3 CASCADE;
 
 -- Create investivative query table
+
+-- Set of every combinations from Cars with the lowest number of cylinders and lowest efficiency 
+-- and Cars with the highest number of cylinders and highest efficiency
+-- along with the MPG and engine displacement differences:
+-- year is the year the car was made
+-- A_cylinders is number of cylinders for the highest cylinders and highest efficiency cars
+-- A_make is the car’s make description for the highest cylinders and highest efficiency cars
+-- A_displacement is the displacement volume in cubic inches for each car in the highest cylinders and highest efficiency cars
+-- A_mpg is the mileage per gallon for each car in the highest cylinders and highest efficiency cars
+-- B_cylinders is number of cylinders for the lowest cylinders and lowest efficiency cars
+-- B_make is the car’s make description for the lowest cylinders and lowest efficiency cars
+-- B_displacement is the displacement volume in cubic inches for each car in the lowest cylinders and lowest efficiency cars
+-- B_mpg is the mileage per gallon for each car in the lowest cylinders and lowest efficiency cars
+-- MPG_Difference is the difference in MPG between Car B and Car A (i.e. B_mpg - A_mpg)
+-- displacement_Difference is the difference in engine displacement between Car B and Car A (i.e. B_displacement - A_displacement)
 CREATE TABLE iq3 (
     Year INT NOT NULL,
     A_make TEXT NOT NULL,
@@ -24,6 +39,8 @@ DROP VIEW IF EXISTS carHYC CASCADE;
 DROP VIEW IF EXISTS carLYC CASCADE;
 DROP VIEW IF EXISTS lowEfficiencyMakehelper CASCADE;
 DROP VIEW IF EXISTS highEfficiencyMakehelper CASCADE;
+DROP VIEW IF EXISTS lowestEfficiency CASCADE;
+DROP VIEW IF EXISTS highestEfficiency CASCADE;
 DROP VIEW IF EXISTS highCylEfficiency CASCADE;
 DROP VIEW IF EXISTS lowCylEfficiency CASCADE;
 DROP VIEW IF EXISTS joinHelper CASCADE;
@@ -39,7 +56,7 @@ FROM Parameters
 Group by year
 order by year;
 
--- lowest cylinder cars every year:
+-- Lowest cylinder cars every year:
 -- lowest is number of cylinders
 -- year is the year the car was made
 CREATE VIEW lowestYearlyCylinder AS
@@ -47,7 +64,6 @@ SELECT Min(cylinders) as lowest, year
 FROM Parameters
 Group by year
 order by year;
-
 
 -- Cars with the highest number of cylinders along with their other parameters:
 -- CarID is the identifier
@@ -76,7 +92,7 @@ and
 Parameters.year = lowestYearlyCylinder.year;
 
 
--- Cars with the lowest number of cylinders along with their other car parameters:
+-- Cars with the lowest number of cylinders along with their other car parameters and make description:
 -- CarID is the identifier
 -- lowest is number of cylinders
 -- make is the car’s make description
@@ -89,7 +105,7 @@ from carLYC INNER JOIN Cars on
 carLYC.carID = Cars.carID
 order by year;
 
--- Cars with the highest number of cylinders along with their other car parameters:
+-- Cars with the highest number of cylinders along with their other car parameters and make description:
 -- CarID is the identifier
 -- highest is number of cylinders
 -- make is the car’s make description
@@ -102,7 +118,7 @@ from carHYC INNER JOIN Cars on
 carHYC.carID = Cars.carID
 order by year;
 
--- Cars with the highest efficiency according to mpg:
+-- Cars with the highest fuel efficiency according to mpg:
 -- mpg is the highest miles per gallon from each set of cars grouped by year
 -- year is the year the car was made
 CREATE VIEW highestEfficiency AS
@@ -111,7 +127,7 @@ from carHYC
 Group by year
 order by year;
 
--- Cars with the lowest efficiency according to mpg:
+-- Cars with the lowest fuel efficiency according to mpg:
 -- mpg is the lowest miles per gallon from each set of cars grouped by year
 -- year is the year the car was made
 CREATE VIEW lowestEfficiency AS
@@ -120,10 +136,10 @@ from carLYC
 Group by year
 order by year;
 
--- Cars with the highest number of cylinders and lowest efficiency 
+-- Cars with the highest number of cylinders and highest efficiency 
 -- along with their other car parameters:
 -- CarID is the identifier
--- A_highest is number of cylinders
+-- A_cylinders is number of cylinders
 -- A_make is the car’s make description
 -- A_displacement is the displacement volume in cubic inches for each car
 -- A_mpg is the mileage per gallon for each car
@@ -137,10 +153,10 @@ and
 highEfficiencyMakehelper.mpg = highestEfficiency.mpg
 order by A_year;
 
--- Cars with the lowest number of cylinders and highest efficiency 
+-- Cars with the lowest number of cylinders and lowest efficiency 
 -- along with their other car parameters:
--- B_CarID is the identifier
--- B_highest is number of cylinders
+-- CarID is the identifier
+-- B_cylinders is number of cylinders
 -- B_make is the car’s make description
 -- B_displacement is the displacement volume in cubic inches for each car
 -- B_mpg is the mileage per gallon for each car
@@ -154,17 +170,17 @@ and
 lowEfficiencyMakehelper.mpg = lowestEfficiency.mpg
 order by B_year;
 
--- Set of every combinations from Cars with the lowest number of cylinders and highest efficiency 
--- and Cars with the highest number of cylinders and lowest efficiency:
+-- Set of every combinations from Cars with the lowest number of cylinders and lowest efficiency 
+-- and Cars with the highest number of cylinders and highest efficiency:
 -- year is the year the car was made
--- A_highest is number of cylinders for the highest cylinders and lowest efficiency cars
--- A_make is the car’s make description for the highest cylinders and lowest efficiency cars
--- A_displacement is the displacement volume in cubic inches for each car in the highest cylinders and lowest efficiency cars
--- A_mpg is the mileage per gallon for each car in the highest cylinders and lowest efficiency cars
--- B_highest is number of cylinders for the lowest cylinders and highest efficiency cars
--- B_make is the car’s make description for the lowest cylinders and highest efficiency cars
--- B_displacement is the displacement volume in cubic inches for each car in the lowest cylinders and highest efficiency cars
--- B_mpg is the mileage per gallon for each car in the lowest cylinders and highest efficiency cars
+-- A_cylinders is number of cylinders for the highest cylinders and highest efficiency cars
+-- A_make is the car’s make description for the highest cylinders and highest efficiency cars
+-- A_displacement is the displacement volume in cubic inches for each car in the highest cylinders and highest efficiency cars
+-- A_mpg is the mileage per gallon for each car in the highest cylinders and highest efficiency cars
+-- B_cylinders is number of cylinders for the lowest cylinders and lowest efficiency cars
+-- B_make is the car’s make description for the lowest cylinders and lowest efficiency cars
+-- B_displacement is the displacement volume in cubic inches for each car in the lowest cylinders and lowest efficiency cars
+-- B_mpg is the mileage per gallon for each car in the lowest cylinders and lowest efficiency cars
 CREATE VIEW joinHelper AS 
 select A_year as year, A_make, A_displacement, A_mpg, A_cylinders, 
         B_make, B_displacement, B_mpg, B_cylinders
@@ -187,6 +203,3 @@ insert into iq3
     ROUND((B_displacement - A_displacement)::numeric, 2) as displacement_Difference   
     FROM joinHelper
 );
-
--- Show investivative query's results
-SELECT * FROM iq3;

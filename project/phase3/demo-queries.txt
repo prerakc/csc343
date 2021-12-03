@@ -12,20 +12,45 @@
 \echo  -------------------- Investigative Question 1: ------------------ 
 \echo
 \i queries-iq1.sql
+\echo MetricsPerYearContinent
+SELECT * FROM MetricsPerYearContinent;
+\echo iq1
+SELECT * FROM iq1;
 \echo
 \echo  -------------------- Investigative Question 2: ------------------ 
 \echo
 \i queries-iq2.sql
+\echo NoHorsepowerNull
+SELECT * FROM NoHorsepowerNull;
+\echo MetricsPerCar
+SELECT * FROM MetricsPerCar;
+\echo iq2
+SELECT * FROM iq2;
 \echo
 \echo  -------------------- Investigative Question 3: ------------------
 \echo
 \i queries-iq3.sql
+\echo highestYearlyCylinder
 select * from highestYearlyCylinder;
+\echo lowestYearlyCylinder
 select * from lowestYearlyCylinder;
+\echo carHYC
 select * from carHYC;
+\echo carLYC
 select * from carLYC;
+\echo lowEfficiencyMakehelper
 select * from lowEfficiencyMakehelper;
+\echo highEfficiencyMakehelper
 select * from highEfficiencyMakehelper;
+\echo lowestEfficiency
+SELECT * FROM lowestEfficiency;
+\echo highestEfficiency
+SELECT * FROM highestEfficiency;
+\echo highCylEfficiency
 select * from highCylEfficiency;
+\echo lowCylEfficiency
 select * from lowCylEfficiency;
+\echo joinHelper
 select * from joinHelper;
+\echo iq3
+SELECT * FROM iq3;
