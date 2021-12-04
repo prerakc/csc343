@@ -66,7 +66,7 @@ CREATE TABLE Cars (
 -- carID is the identifier for cars
 -- mpg is the mileage per gallon for each car
 -- cylinders is the number of engine cylinders the car has
--- engine displacement is the displacement volume in cubic inches for each car
+-- displacement is the engine displacement volume in cubic inches for each car
 -- horsepower car's engine power in horsepower
 -- weight is the car’s weight in pounds
 -- acceleration is the car's 0-60mph acceleration time in seconds
